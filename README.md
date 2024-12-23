@@ -1,6 +1,6 @@
 # Lila Slow Reverb Player
 
-Lila Slow Reverb Player is a web-based audio player that allows users to play audio files with adjustable playback speed, reverb effects, and vinyl noise overlay. It provides a visual waveform representation of the audio, along with real-time playback progress and time display.
+Lila Slow Reverb Player is an audio player that allows users to play audio files with adjustable playback speed, reverb effects, and vinyl noise overlay. It provides a visual waveform representation of the audio, along with real-time playback progress and time display.
 
 ## Features
 

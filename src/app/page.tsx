@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import * as Tone from "tone";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile, BaseDirectory } from "@tauri-apps/plugin-fs";
@@ -23,6 +23,7 @@ export default function Home() {
   const [speed, setSpeed] = useState(1);
   const [reverbLevel, setReverbLevel] = useState(0);
   const [vinylNoiseLevel, setVinylNoiseLevel] = useState(0);
+  const startTimeRef = useRef<number | null>(null);
 
   // Initialize vinyl noise player
   useEffect(() => {
@@ -50,36 +51,30 @@ export default function Home() {
     if (!currentPlayer || !currentPlayer.buffer) return;
 
     const interval = setInterval(() => {
-      if (currentPlayer.state === "started") {
+      if (currentPlayer.state === "started" && startTimeRef.current !== null) {
         const now = Tone.now();
-        const startTime = (currentPlayer as any)._startTime || now;
         const playbackRate = currentPlayer.playbackRate || 1;
-        const currentTime = (now - startTime) * playbackRate;
+        const currentTime = (now - startTimeRef.current) * playbackRate;
         const bufferDuration = currentPlayer.buffer.duration || 1;
 
-        // Ensure progress is a valid number between 0 and 1
         const newProgress = Math.max(
           0,
           Math.min(currentTime / bufferDuration, 1)
         );
-        if (Number.isFinite(newProgress)) {
-          setProgress(newProgress);
-        }
+        setProgress(newProgress);
 
-        // Stop vinyl sound when audio ends
+        // Stop the player when the progress reaches the end
         if (newProgress >= 1) {
           currentPlayer.stop();
           vinylPlayer?.stop();
           setIsPlaying(false);
+          startTimeRef.current = null;
         }
       }
-    }, 1000); // Update every second for time display
-
-    // Reset progress when player changes
-    setProgress(0);
+    }, 500); // Check every half-second for smoother updates
 
     return () => clearInterval(interval);
-  }, [currentPlayer, vinylPlayer]);
+  }, [currentPlayer]);
 
   // Apply audio settings when player changes
   useEffect(() => {
@@ -102,6 +97,13 @@ export default function Home() {
 
     if (vinylNoiseLevel > 0 && vinylPlayer) {
       vinylPlayer.volume.value = vinylNoiseLevel - 100;
+    }
+  }, [currentPlayer]);
+
+  useEffect(() => {
+    if (!currentPlayer) {
+      setProgress(0);
+      startTimeRef.current = null;
     }
   }, [currentPlayer]);
 
@@ -149,7 +151,9 @@ export default function Home() {
         currentPlayer.stop();
         vinylPlayer?.stop();
         setIsPlaying(false);
+        startTimeRef.current = null; // Reset start time
       } else {
+        startTimeRef.current = Tone.now(); // Store the start time
         currentPlayer.start();
         if (vinylPlayer && vinylPlayer.volume.value > -Infinity) {
           vinylPlayer.start();
@@ -182,7 +186,7 @@ export default function Home() {
         const vol = values[0];
         setVolume(vol);
         if (currentPlayer) {
-          currentPlayer.volume.value = vol - 100;
+          currentPlayer.volume.value = vol - 100; // Boost volume above 100
         }
       } catch (error) {
         console.error("Error changing volume:", error);
@@ -339,8 +343,9 @@ export default function Home() {
               value={[volume]}
               onValueChange={handleVolumeChange}
               min={0}
-              max={100}
+              max={150} // Allow volume up to 150%
               step={1}
+              className={`${volume > 100 ? "bg-red-500" : "bg-primary"}`}
             />
           </div>
           <div>
