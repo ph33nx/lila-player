@@ -61,7 +61,7 @@ function AudioWaveform({
         0,
         0,
         canvas.width,
-        canvas.height,
+        canvas.height
       );
     } else {
       ctx.putImageData(waveformImageRef.current, 0, 0);
@@ -81,7 +81,7 @@ function AudioWaveform({
 
   useEffect(() => {
     drawWaveform();
-  }, [drawWaveform]);
+  }, [drawWaveform, buffer, progress]);
 
   useEffect(() => {
     if (buffer) {
@@ -104,16 +104,16 @@ function AudioWaveform({
       const clickedProgress = x / canvas.width;
       onProgressClick(clickedProgress);
     },
-    [onProgressClick],
+    [onProgressClick]
   );
 
   const formattedCurrentTime = useMemo(
     () => formatTime(buffer ? progress * buffer.duration : 0),
-    [buffer, progress],
+    [buffer, progress]
   );
   const formattedDuration = useMemo(
     () => formatTime(buffer ? buffer.duration : 0),
-    [buffer],
+    [buffer]
   );
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

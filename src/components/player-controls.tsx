@@ -44,7 +44,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = memo(
       (callback: (value: number) => void) => (values: number[]) => {
         callback(values[0]);
       },
-      [],
+      []
     );
 
     const buttonVariants = {
@@ -121,7 +121,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = memo(
           </div>
         </div>
 
-        <div className="flex justify-center items-center gap-4">
+        <div className="flex justify-center items-center gap-4 mt-8">
           <motion.div
             variants={buttonVariants}
             whileHover="hover"
@@ -183,7 +183,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = memo(
         </div>
       </motion.div>
     );
-  },
+  }
 );
 
 PlayerControls.displayName = "PlayerControls";

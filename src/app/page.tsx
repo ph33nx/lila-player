@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAudioProcessor } from "@/hooks/useAudioProcessor";
+import { useAudioProcessor } from "@/hooks/use-audio-processor";
 import PlayerControls from "@/components/player-controls";
 import AudioWaveform from "@/components/audio-waveform";
 import { motion } from "framer-motion";
@@ -20,12 +20,7 @@ export default function Home() {
     setVinylVolume,
     filename,
     progress,
-    volume,
-    playbackRate,
-    reverbLevel,
-    vinylVolume,
-    isPlaying,
-    isLooping,
+    audioSettings,
     audioBuffer,
     isSaving,
     isWaveformLoading,
@@ -33,7 +28,6 @@ export default function Home() {
   } = useAudioProcessor();
 
   useEffect(() => {
-    // Simulate initialization delay (e.g., loading essential resources).
     const timeout = setTimeout(() => setIsAppLoading(false), 1000);
 
     return () => clearTimeout(timeout);
@@ -72,18 +66,18 @@ export default function Home() {
         <PlayerControls
           onPlayPause={handlePlayPause}
           toggleLoop={toggleLoop}
-          onSave={() => handleSave}
+          onSave={handleSave}
           onVolumeChange={setVolume}
           onSpeedChange={setPlaybackRate}
           onReverbChange={setReverbLevel}
           onVinylVolumeChange={setVinylVolume}
-          volume={volume}
-          playbackRate={playbackRate}
-          reverbLevel={reverbLevel}
-          vinylVolume={vinylVolume}
-          isPlaying={isPlaying}
+          volume={audioSettings.volume}
+          playbackRate={audioSettings.playbackRate}
+          reverbLevel={audioSettings.reverbLevel}
+          vinylVolume={audioSettings.vinylVolume}
+          isPlaying={audioSettings.isPlaying}
           isSaving={isSaving}
-          isLooping={isLooping}
+          isLooping={audioSettings.isLooping}
         />
       </div>
     </motion.div>

@@ -1,7 +1,7 @@
 [package]
-name = "app"
+name = "Lila"
 version = "0.1.0"
-description = "A Tauri App"
+description = "Lila Player - Slowed and Reverb LoFi Player"
 authors = ["ph33nx"]
 license = ""
 repository = ""
