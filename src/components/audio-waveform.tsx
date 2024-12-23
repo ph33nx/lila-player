@@ -32,8 +32,8 @@ function AudioWaveform({
     const total = buffer.duration || 0;
     const current = total * progress;
     return {
-      currentTime: Number.isFinite(current) ? formatTime(current) : "0:00",
-      totalDuration: Number.isFinite(total) ? formatTime(total) : "0:00",
+      currentTime: formatTime(current),
+      totalDuration: formatTime(total),
     };
   }, [buffer, progress]);
 

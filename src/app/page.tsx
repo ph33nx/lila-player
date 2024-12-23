@@ -65,6 +65,13 @@ export default function Home() {
         if (Number.isFinite(newProgress)) {
           setProgress(newProgress);
         }
+
+        // Stop vinyl sound when audio ends
+        if (newProgress >= 1) {
+          currentPlayer.stop();
+          vinylPlayer?.stop();
+          setIsPlaying(false);
+        }
       }
     }, 1000); // Update every second for time display
 
@@ -72,7 +79,7 @@ export default function Home() {
     setProgress(0);
 
     return () => clearInterval(interval);
-  }, [currentPlayer]);
+  }, [currentPlayer, vinylPlayer]);
 
   // Apply audio settings when player changes
   useEffect(() => {
@@ -307,7 +314,7 @@ export default function Home() {
       transition={{ duration: 0.5 }}
     >
       <motion.div
-        className="w-full max-w-4xl bg-card p-8 rounded-lg shadow-lg"
+        className="w-full max-w-4xl bg-card p-8 rounded-lg"
         initial={{ y: 20 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}

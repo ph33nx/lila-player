@@ -1,33 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lila Slow Reverb Player
+
+Lila Slow Reverb Player is a web-based audio player that allows users to play audio files with adjustable playback speed, reverb effects, and vinyl noise overlay. It provides a visual waveform representation of the audio, along with real-time playback progress and time display.
+
+## Features
+
+- Play audio files with adjustable speed and pitch.
+- Add reverb effects with customizable levels.
+- Overlay vinyl noise for an authentic vintage sound.
+- Visual waveform display with real-time progress tracking.
+- Responsive design for seamless user experience.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js and npm installed on your machine.
+- Tauri CLI installed for building the desktop application.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Setup Development Environment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repository:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   git clone https://github.com/your-username/lila-slow-reverb-player.git
+   cd lila-slow-reverb-player
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+### Tauri v2 Instructions
+
+1. Ensure you have Tauri CLI installed:
+
+   ```bash
+   cargo install tauri-cli
+   ```
+
+2. Build the Tauri application:
+
+   ```bash
+   npm run tauri build
+   ```
+
+3. Start the Tauri development environment:
+
+   ```bash
+   npm run tauri dev
+   ```
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+To learn more about Next.js and Tauri, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Tauri Documentation](https://tauri.studio/docs) - learn about Tauri features and API.
 
 ## Deploy on Vercel
 
