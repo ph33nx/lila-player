@@ -63,13 +63,11 @@ Lila Slow Reverb Player is an audio player desktop app that allows users to play
    npm install
    ```
 
-3. Start the development server:
+3. Start the app in development mode:
 
    ```bash
-   npm run dev
+   npm run tauri dev
    ```
-
-   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ### Tauri v2 Instructions
 
