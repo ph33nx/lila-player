@@ -127,7 +127,7 @@ export const useAudioProcessor = () => {
   const [settings, setSettings] = useState({
     playbackRate: 0.85,
     volume: 85,
-    reverbLevel: 50,
+    reverbLevel: 35,
     vinylVolume: 50,
     isLooping: false,
   });
@@ -204,7 +204,7 @@ export const useAudioProcessor = () => {
     if (isPlaying) {
       animationFrameRef.current = requestAnimationFrame(updateProgress);
     }
-  }, [context, isPlaying, progress, setIsPlaying]);
+  }, [context, isPlaying, progress, setIsPlaying, settings.isLooping]);
 
   // Start/stop progress updates based on playing state
   useEffect(() => {
@@ -238,7 +238,7 @@ export const useAudioProcessor = () => {
     }
     setSourceNode(null);
     setIsPlaying(false);
-  }, [sourceNode]);
+  }, [sourceNode, setIsPlaying]);
 
   const connectAudioNodes = useCallback(
     (source: AudioBufferSourceNode) => {
@@ -288,6 +288,7 @@ export const useAudioProcessor = () => {
       settings.playbackRate,
       stopAudio,
       connectAudioNodes,
+      setIsPlaying,
     ]
   );
 

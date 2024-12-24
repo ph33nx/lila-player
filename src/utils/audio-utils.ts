@@ -44,7 +44,7 @@ export const audioBufferToWav = (buffer: AudioBuffer): ArrayBuffer => {
 
 export const loadImpulseResponse = async (
   context: AudioContext,
-  url: string
+  url: string,
 ): Promise<AudioBuffer> => {
   const response = await fetch(url);
   const buffer = await response.arrayBuffer();

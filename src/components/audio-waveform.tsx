@@ -4,14 +4,13 @@ import { useEffect, useRef, memo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { Upload } from "lucide-react";
-import { Input } from "./ui/input";
 
 // Custom hook for handling canvas operations
 const useWaveformCanvas = (
   buffer: AudioBuffer | null,
   progress: number,
   onProgressClick: (progress: number) => void,
-  onProgressUpdate: (callback: (progress: number) => void) => () => void
+  onProgressUpdate: (callback: (progress: number) => void) => () => void,
 ) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -53,7 +52,7 @@ const useWaveformCanvas = (
 
       return waveformData;
     },
-    []
+    [],
   );
 
   // Store waveform data to avoid recalculation
@@ -75,7 +74,7 @@ const useWaveformCanvas = (
       const channelData = buffer.getChannelData(0);
       waveformDataRef.current = calculateWaveformData(
         channelData,
-        canvas.width
+        canvas.width,
       );
     }
 
@@ -104,7 +103,7 @@ const useWaveformCanvas = (
         0,
         0,
         canvas.width,
-        canvas.height
+        canvas.height,
       );
     }
 
@@ -135,7 +134,7 @@ const useWaveformCanvas = (
     ctx.moveTo(progressWidth, 0);
     ctx.lineTo(progressWidth, canvas.height);
     ctx.stroke();
-  }, [buffer, progress, calculateWaveformData]);
+  }, [buffer, progress]);
 
   // Handle canvas interactions
   const handleCanvasInteraction = useCallback(
@@ -149,7 +148,7 @@ const useWaveformCanvas = (
       const clickedProgress = Math.max(0, Math.min(1, x / canvas.width));
       onProgressClick(clickedProgress);
     },
-    [onProgressClick]
+    [onProgressClick],
   );
 
   // Initialize waveform when buffer changes
@@ -207,7 +206,7 @@ const useFileHandler = (onFileChange: (file: File) => void) => {
         onFileChange(e.target.files[0]);
       }
     },
-    [onFileChange]
+    [onFileChange],
   );
 
   const openFilePicker = useCallback(() => {
@@ -251,7 +250,7 @@ function AudioWaveform({
     buffer,
     progress,
     onProgressClick,
-    onProgressUpdate
+    onProgressUpdate,
   );
 
   const { fileInputRef, handleFileUpload, openFilePicker } =

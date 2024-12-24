@@ -44,7 +44,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = memo(
       (callback: (value: number) => void) => (values: number[]) => {
         callback(values[0]);
       },
-      []
+      [],
     );
 
     const buttonVariants = {
@@ -175,7 +175,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = memo(
         </div>
       </motion.div>
     );
-  }
+  },
 );
 
 PlayerControls.displayName = "PlayerControls";
