@@ -38,16 +38,6 @@ Lila Slow Reverb Player is an audio player desktop app that allows users to play
      npm --version
      ```
 
-3. **Tauri CLI**:
-   - Install the Tauri CLI for building the desktop application:
-     ```bash
-     cargo install tauri-cli
-     ```
-   - Verify installation:
-     ```bash
-     tauri --version
-     ```
-
 ### Setup Development Environment
 
 1. Clone the repository:
@@ -69,22 +59,8 @@ Lila Slow Reverb Player is an audio player desktop app that allows users to play
    npm run tauri dev
    ```
 
-### Tauri v2 Instructions
-
-1. Ensure you have Tauri CLI installed:
-
-   ```bash
-   cargo install tauri-cli
-   ```
-
-2. Build the Tauri application:
+4. Build the app for production:
 
    ```bash
    npm run tauri build
-   ```
-
-3. Start the Tauri development environment:
-
-   ```bash
-   npm run tauri dev
    ```
