@@ -1,4 +1,4 @@
-# Lila - Slowed and Reverb LoFi Audio Player
+# Lila - Slowed and Reverb LoFi Audio Player (Desktop App)
 
 Lila Slow Reverb Player is an audio player desktop app that allows users to play audio files with adjustable playback speed, reverb effects, and vinyl noise overlay. It provides a visual waveform representation of the audio, along with real-time playback progress and time display. Built with Rust and React, the app offers a responsive design for a seamless user experience.
 
