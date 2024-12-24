@@ -129,7 +129,7 @@ export const useAudioProcessor = () => {
     volume: 85,
     reverbLevel: 35,
     vinylVolume: 50,
-    isLooping: false,
+    isLooping: true,
   });
 
   const [isPlaying, setIsPlaying] = usePlaybackState(sourceNode);
