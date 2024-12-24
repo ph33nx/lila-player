@@ -20,11 +20,13 @@ export default function Home() {
     setVinylVolume,
     filename,
     progress,
-    audioSettings,
+    settings,
+    isPlaying,
     audioBuffer,
     isSaving,
     isWaveformLoading,
     handleWaveformClick,
+    onProgressUpdate,
   } = useAudioProcessor();
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export default function Home() {
 
   return (
     <motion.div
-      className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4 select-none px-4 py-4"
+      className="flex flex-col items-center justify-center min-h-screen p-4 select-none px-4 py-4 max-w-3xl mx-auto"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -60,6 +62,7 @@ export default function Home() {
             isLoading={isWaveformLoading}
             onProgressClick={handleWaveformClick}
             onFileChange={handleFileChange}
+            onProgressUpdate={onProgressUpdate}
             filename={filename}
           />
         </div>
@@ -71,13 +74,13 @@ export default function Home() {
           onSpeedChange={setPlaybackRate}
           onReverbChange={setReverbLevel}
           onVinylVolumeChange={setVinylVolume}
-          volume={audioSettings.volume}
-          playbackRate={audioSettings.playbackRate}
-          reverbLevel={audioSettings.reverbLevel}
-          vinylVolume={audioSettings.vinylVolume}
-          isPlaying={audioSettings.isPlaying}
+          volume={settings.volume}
+          playbackRate={settings.playbackRate}
+          reverbLevel={settings.reverbLevel}
+          vinylVolume={settings.vinylVolume}
+          isPlaying={isPlaying}
           isSaving={isSaving}
-          isLooping={audioSettings.isLooping}
+          isLooping={settings.isLooping}
         />
       </div>
     </motion.div>
