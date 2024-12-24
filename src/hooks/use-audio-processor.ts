@@ -54,27 +54,44 @@ const useAudioContext = () => {
 const useVinylSound = (
   context: AudioContext | null,
   destinationNode: GainNode | null,
-  volume: number
+  volume: number,
+  isPlaying: boolean
 ) => {
+  const vinylRef = useRef<HTMLAudioElement | null>(null);
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+
+  // Setup vinyl audio and connections
   useEffect(() => {
     if (!context || !destinationNode) return;
 
     const vinylAudio = new Audio("/audio/vinyl.mp3");
     vinylAudio.loop = true;
-    vinylAudio.volume = volume / 100;
+    vinylRef.current = vinylAudio;
 
     const vinylSource = context.createMediaElementSource(vinylAudio);
+    sourceRef.current = vinylSource;
     vinylSource.connect(destinationNode).connect(context.destination);
-
-    vinylAudio
-      .play()
-      .catch((err) => console.warn("Vinyl playback interrupted:", err));
 
     return () => {
       vinylAudio.pause();
       vinylSource.disconnect();
     };
-  }, [context, destinationNode, volume]);
+  }, [context, destinationNode]);
+
+  // Control vinyl playback based on isPlaying state
+  useEffect(() => {
+    if (!vinylRef.current) return;
+
+    vinylRef.current.volume = volume / 100;
+
+    if (isPlaying) {
+      vinylRef.current
+        .play()
+        .catch((err) => console.warn("Vinyl playback interrupted:", err));
+    } else {
+      vinylRef.current.pause();
+    }
+  }, [isPlaying, volume]);
 };
 
 // Custom hook for managing audio playback state
@@ -124,7 +141,7 @@ export const useAudioProcessor = () => {
   const progressEmitter = useRef<EventTarget>(new EventTarget());
 
   // Setup vinyl sound
-  useVinylSound(context, nodes.gain, settings.vinylVolume);
+  useVinylSound(context, nodes.gain, settings.vinylVolume, isPlaying);
 
   // Update node parameters when settings change
   useEffect(() => {
@@ -165,15 +182,27 @@ export const useAudioProcessor = () => {
       progressEmitter.current.dispatchEvent(event);
     }
 
-    // Continue animation if playing and not at the end
-    if (isPlaying && newProgress < 1) {
-      animationFrameRef.current = requestAnimationFrame(updateProgress);
-    } else if (newProgress >= 1) {
-      setIsPlaying(false);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
+    // Handle end of audio
+    if (newProgress >= 1) {
+      setProgress(0);
+      if (!settings.isLooping) {
+        setIsPlaying(false);
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
+      } else {
+        // If looping, restart from beginning
+        startTimeRef.current = context.currentTime;
+        // Continue animation for looped playback
+        animationFrameRef.current = requestAnimationFrame(updateProgress);
       }
+      return;
+    }
+
+    // Continue animation if playing
+    if (isPlaying) {
+      animationFrameRef.current = requestAnimationFrame(updateProgress);
     }
   }, [context, isPlaying, progress, setIsPlaying]);
 

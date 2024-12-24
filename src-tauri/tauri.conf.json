@@ -5,7 +5,7 @@
   "identifier": "com.lila-player.dev",
   "build": {
     "frontendDist": "../out",
-    "devUrl": "http://localhost:3000",
+    "devUrl": "http://localhost:3123",
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build"
   },
