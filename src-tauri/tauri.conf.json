@@ -17,7 +17,9 @@
         "height": 600,
         "resizable": false,
         "fullscreen": false,
-        "center": true
+        "center": true,
+        "decorations": true,
+        "backgroundColor": "#000000"
       }
     ],
     "security": {
