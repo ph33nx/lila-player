@@ -1,6 +1,8 @@
-# Lila Slow Reverb Player
+# Lila - Slowed and Reverb LoFi Audio Player
 
-Lila Slow Reverb Player is an audio player that allows users to play audio files with adjustable playback speed, reverb effects, and vinyl noise overlay. It provides a visual waveform representation of the audio, along with real-time playback progress and time display.
+Lila Slow Reverb Player is an audio player desktop app that allows users to play audio files with adjustable playback speed, reverb effects, and vinyl noise overlay. It provides a visual waveform representation of the audio, along with real-time playback progress and time display. Built with Rust and React, the app offers a responsive design for a seamless user experience.
+
+[![Download Lila Player](https://img.shields.io/badge/Download-Lila_Player-blue?style=for-the-badge&logo=github)](https://github.com/ph33nx/lila-player/releases)
 
 ## Features
 
@@ -10,20 +12,47 @@ Lila Slow Reverb Player is an audio player that allows users to play audio files
 - Visual waveform display with real-time progress tracking.
 - Responsive design for seamless user experience.
 
-## Getting Started
+## Development
 
 ### Prerequisites
 
-- Node.js and npm installed on your machine.
-- Tauri CLI installed for building the desktop application.
+1. **Rust Programming Language**:
+
+   - Install Rust using `rustup`, the recommended installer:
+     ```bash
+     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+     ```
+   - After installation, ensure `cargo` (Rust's package manager) is available by running:
+     ```bash
+     cargo --version
+     ```
+
+2. **Node.js and npm**:
+
+   - Download and install Node.js from [Node.js Official Website](https://nodejs.org).
+   - Confirm installation by checking the versions:
+     ```bash
+     node --version
+     npm --version
+     ```
+
+3. **Tauri CLI**:
+   - Install the Tauri CLI for building the desktop application:
+     ```bash
+     cargo install tauri-cli
+     ```
+   - Verify installation:
+     ```bash
+     tauri --version
+     ```
 
 ### Setup Development Environment
 
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/lila-slow-reverb-player.git
-   cd lila-slow-reverb-player
+   git clone https://github.com/ph33nx/lila-player
+   cd lila-player
    ```
 
 2. Install dependencies:
@@ -59,16 +88,3 @@ Lila Slow Reverb Player is an audio player that allows users to play audio files
    ```bash
    npm run tauri dev
    ```
-
-## Learn More
-
-To learn more about Next.js and Tauri, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Tauri Documentation](https://tauri.studio/docs) - learn about Tauri features and API.
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

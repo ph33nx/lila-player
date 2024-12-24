@@ -55,7 +55,7 @@ const useVinylSound = (
   context: AudioContext | null,
   destinationNode: GainNode | null,
   volume: number,
-  isPlaying: boolean
+  isPlaying: boolean,
 ) => {
   const vinylRef = useRef<HTMLAudioElement | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
@@ -116,7 +116,7 @@ const usePlaybackState = (sourceNode: AudioBufferSourceNode | null) => {
 export const useAudioProcessor = () => {
   const { context, nodes } = useAudioContext();
   const [sourceNode, setSourceNode] = useState<AudioBufferSourceNode | null>(
-    null
+    null,
   );
   const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
   const [filename, setFilename] = useState<string | null>(null);
@@ -227,7 +227,7 @@ export const useAudioProcessor = () => {
         progressEmitter.current.removeEventListener("progressupdate", handler);
       };
     },
-    []
+    [],
   );
 
   // Audio control functions
@@ -260,7 +260,7 @@ export const useAudioProcessor = () => {
 
       nodes.gain.connect(context.destination);
     },
-    [nodes, context]
+    [nodes, context],
   );
 
   const playAudio = useCallback(
@@ -289,7 +289,7 @@ export const useAudioProcessor = () => {
       stopAudio,
       connectAudioNodes,
       setIsPlaying,
-    ]
+    ],
   );
 
   // Event handlers
@@ -314,7 +314,7 @@ export const useAudioProcessor = () => {
         setIsWaveformLoading(false);
       }
     },
-    [context, stopAudio]
+    [context, stopAudio],
   );
 
   const handlePlayPause = useCallback(() => {
@@ -332,7 +332,7 @@ export const useAudioProcessor = () => {
       startTimeRef.current = context!.currentTime - newTime;
       playAudio(newTime);
     },
-    [playAudio, context]
+    [playAudio, context],
   );
 
   const handleSave = useCallback(async () => {
@@ -344,7 +344,7 @@ export const useAudioProcessor = () => {
       const offlineContext = new OfflineAudioContext(
         audioBuffer.numberOfChannels,
         audioBuffer.length,
-        audioBuffer.sampleRate
+        audioBuffer.sampleRate,
       );
 
       const source = offlineContext.createBufferSource();
