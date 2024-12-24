@@ -4,6 +4,8 @@ Lila Slow Reverb Player is an audio player desktop app that allows users to play
 
 [![Download Lila Player](https://img.shields.io/badge/Download-Lila_Player-blue?style=for-the-badge&logo=github)](https://github.com/ph33nx/lila-player/releases)
 
+![Lila Player Screenshot](./assets/screenshot.png)
+
 ## Features
 
 - Play audio files with adjustable speed and pitch.
