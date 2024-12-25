@@ -127,7 +127,7 @@ export const useAudioProcessor = () => {
   const [settings, setSettings] = useState({
     playbackRate: 0.85,
     volume: 85,
-    reverbLevel: 35,
+    reverbLevel: 40,
     vinylVolume: 50,
     isLooping: true,
   });

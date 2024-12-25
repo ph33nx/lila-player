@@ -154,11 +154,15 @@ const useWaveformCanvas = (
   // Initialize waveform when buffer changes
   useEffect(() => {
     if (!buffer) {
+      // Clear cached waveform and base image when no buffer is provided
       waveformDataRef.current = null;
       baseImageRef.current = null;
       return;
     }
 
+    // Clear cached data and initialize waveform for the new buffer
+    waveformDataRef.current = null;
+    baseImageRef.current = null;
     initializeWaveform();
   }, [buffer, initializeWaveform]);
 
