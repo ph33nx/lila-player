@@ -1,0 +1,82 @@
+---
+description: Lila Player - Audio Processing Desktop App Rules
+globs: ['**/*.{ts,tsx,js,jsx,rs}']
+alwaysApply: true
+---
+
+# Lila Player Development Rules
+
+## Project Overview
+Lila Player is a Tauri + Next.js desktop audio player that creates slowed and reverb LoFi effects. It processes audio files with adjustable speed, reverb, and vinyl noise overlay.
+
+## Architecture
+- **Frontend**: Next.js 15 with React 19, TypeScript, Tailwind CSS, Framer Motion
+- **Backend**: Tauri 2.x with Rust
+- **Audio Processing**: Web Audio API with custom audio nodes
+- **UI Components**: Radix UI primitives with custom styling
+
+## Code Standards
+
+### TypeScript/React Rules
+- Use strict TypeScript with proper type definitions
+- Prefer functional components with hooks
+- Use `memo()` for performance optimization on heavy components
+- Implement proper error boundaries and loading states
+- Use `useCallback` and `useMemo` for expensive operations
+- Follow React 19 patterns and avoid deprecated APIs
+
+### Audio Processing Rules
+- Always handle Web Audio API context suspension/resumption
+- Implement proper cleanup for audio nodes and sources
+- Use OfflineAudioContext for audio rendering/export
+- Handle audio buffer loading errors gracefully
+- Optimize waveform rendering with double buffering
+- Use requestAnimationFrame for smooth progress updates
+
+### Tauri Integration Rules
+- Use Tauri plugins for file system and dialog operations
+- Implement proper error handling for Tauri commands
+- Follow Tauri security best practices
+- Use proper CSP configuration for production builds
+
+### Performance Rules
+- Optimize canvas operations with offscreen rendering
+- Use Web Workers for heavy audio processing if needed
+- Implement proper memory management for audio buffers
+- Cache waveform data to avoid recalculation
+- Use efficient data structures for audio processing
+
+### UI/UX Rules
+- Maintain consistent dark theme with proper contrast
+- Use Framer Motion for smooth animations
+- Implement responsive design for different window sizes
+- Provide clear visual feedback for user interactions
+- Use proper accessibility attributes
+
+### File Organization
+- Keep audio processing logic in `/src/hooks/`
+- Store utility functions in `/src/utils/`
+- Place UI components in `/src/components/`
+- Keep Tauri-specific code in `/src-tauri/src/`
+- Use proper import/export patterns
+
+### Error Handling
+- Implement comprehensive error handling for audio operations
+- Provide user-friendly error messages
+- Log errors appropriately in development
+- Handle file loading failures gracefully
+- Validate audio file formats before processing
+
+### Testing Considerations
+- Write unit tests for audio processing functions
+- Test audio node connections and cleanup
+- Verify waveform rendering accuracy
+- Test file handling and error scenarios
+- Ensure cross-platform compatibility
+
+## Development Workflow
+- Use pnpm for package management
+- Follow conventional commit messages
+- Run linting and formatting before commits
+- Test audio processing on different file formats
+- Verify Tauri build process regularly
