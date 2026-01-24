@@ -47,7 +47,7 @@ Head to [**Releases**](https://github.com/ph33nx/lila-player/releases) and downl
 
 ### Prerequisites — All Platforms
 
-1. **Node.js (v18+)**
+1. **Node.js (v20+ LTS recommended, v24 LTS latest)**
    ```bash
    # Verify installation
    node --version
