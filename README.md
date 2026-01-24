@@ -43,7 +43,13 @@ Head to [**Releases**](https://github.com/ph33nx/lila-player/releases) and downl
 
 ---
 
-## 🛠️ Build from Source
+## 📦 Versioning
+
+Update version in both `package.json` and `src-tauri/tauri.conf.json`. Pushing to `master` triggers GitHub Actions to build and release binaries automatically.
+
+---
+
+## 🛠️ Development
 
 ### Prerequisites — All Platforms
 
