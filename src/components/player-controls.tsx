@@ -131,11 +131,11 @@ const PlayerControls: React.FC<PlayerControlsProps> = memo(
               onClick={toggleLoop}
               variant="outline"
               size="icon"
-              className="rounded-full"
+              className="rounded-full h-10 w-10"
               title={isLooping ? "Disable loop" : "Enable loop"}
             >
               <Repeat
-                className={`${isLooping ? "text-white" : "text-gray-400"}`}
+                className={`h-5 w-5 ${isLooping ? "text-white" : "text-gray-400"}`}
               />
             </Button>
           </motion.div>
@@ -149,10 +149,14 @@ const PlayerControls: React.FC<PlayerControlsProps> = memo(
               onClick={onPlayPause}
               variant="outline"
               size="icon"
-              className="rounded-full w-20 h-20"
+              className="rounded-full w-16 h-16"
               title={isPlaying ? "Pause" : "Play"}
             >
-              {isPlaying ? <Pause /> : <Play />}
+              {isPlaying ? (
+                <Pause className="h-8 w-8" />
+              ) : (
+                <Play className="h-8 w-8 translate-x-0.5" />
+              )}
             </Button>
           </motion.div>
 
@@ -165,11 +169,15 @@ const PlayerControls: React.FC<PlayerControlsProps> = memo(
               onClick={onSave}
               variant="outline"
               size="icon"
-              className="rounded-full"
+              className="rounded-full h-10 w-10"
               disabled={isSaving}
               title="Save"
             >
-              {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
+              {isSaving ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Save className="h-5 w-5" />
+              )}
             </Button>
           </motion.div>
         </div>

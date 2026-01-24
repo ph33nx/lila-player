@@ -1,0 +1,19 @@
+# lefthook.yml
+# Git hooks for code quality
+
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: "*.{js,ts,jsx,tsx,json,css,md}"
+      run: npm run format
+      stage_fixed: true
+    lint:
+      glob: "*.{js,ts,jsx,tsx}"
+      run: npm run lint -- --fix
+      stage_fixed: true
+
+pre-push:
+  commands:
+    typecheck:
+      run: npm run typecheck

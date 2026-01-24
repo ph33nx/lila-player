@@ -19,8 +19,9 @@ const useAudioContext = () => {
   });
 
   useEffect(() => {
-    const audioContext = new (window.AudioContext ||
-      window.webkitAudioContext)();
+    const audioContext = new (
+      window.AudioContext || window.webkitAudioContext
+    )();
     const gain = audioContext.createGain();
     const reverbGain = audioContext.createGain();
     const dryGain = audioContext.createGain();
@@ -136,9 +137,16 @@ export const useAudioProcessor = () => {
 
   // Refs for timing
   const durationRef = useRef<number>(0);
-  const startTimeRef = useRef<number>(0);
+  const audioPositionRef = useRef<number>(0); // Position in source audio (seconds)
+  const lastFrameTimeRef = useRef<number>(0); // Last context.currentTime for delta calculation
   const animationFrameRef = useRef<number | null>(null);
   const progressEmitter = useRef<EventTarget>(new EventTarget());
+  const playbackRateRef = useRef<number>(settings.playbackRate); // Avoid stale closure in animation frame
+
+  // Keep playbackRateRef in sync
+  useEffect(() => {
+    playbackRateRef.current = settings.playbackRate;
+  }, [settings.playbackRate]);
 
   // Setup vinyl sound
   useVinylSound(context, nodes.gain, settings.vinylVolume, isPlaying);
@@ -161,7 +169,7 @@ export const useAudioProcessor = () => {
     nodes.dryGain.gain.value = 1 - reverbLevel;
   }, [nodes.reverbGain, nodes.dryGain, settings.reverbLevel]);
 
-  // Optimized progress update function
+  // Optimized progress update function - tracks audio position directly
   const updateProgress = useCallback(() => {
     if (!context || !durationRef.current) {
       if (animationFrameRef.current) {
@@ -171,36 +179,44 @@ export const useAudioProcessor = () => {
       return;
     }
 
-    const elapsedTime = context.currentTime - startTimeRef.current;
-    const newProgress = Math.min(elapsedTime / durationRef.current, 1);
+    // Calculate delta time since last frame
+    const now = context.currentTime;
+    const deltaTime = now - lastFrameTimeRef.current;
+    lastFrameTimeRef.current = now;
+
+    // Advance audio position by delta * playbackRate (use ref to avoid stale closure)
+    audioPositionRef.current += deltaTime * playbackRateRef.current;
+    const newProgress = Math.min(
+      audioPositionRef.current / durationRef.current,
+      1,
+    );
 
     // Only update if progress has changed
     if (Math.abs(newProgress - progress) > 0.001) {
       setProgress(newProgress);
-      // Emit progress update event
       const event = new CustomEvent("progressupdate", { detail: newProgress });
       progressEmitter.current.dispatchEvent(event);
     }
 
     // Handle end of audio
     if (newProgress >= 1) {
-      setProgress(0);
       if (!settings.isLooping) {
+        audioPositionRef.current = 0;
+        setProgress(0);
         setIsPlaying(false);
         if (animationFrameRef.current) {
           cancelAnimationFrame(animationFrameRef.current);
           animationFrameRef.current = null;
         }
       } else {
-        // If looping, restart from beginning
-        startTimeRef.current = context.currentTime;
-        // Continue animation for looped playback
+        // Loop: reset audio position to beginning
+        audioPositionRef.current = 0;
+        setProgress(0);
         animationFrameRef.current = requestAnimationFrame(updateProgress);
       }
       return;
     }
 
-    // Continue animation if playing
     if (isPlaying) {
       animationFrameRef.current = requestAnimationFrame(updateProgress);
     }
@@ -279,7 +295,10 @@ export const useAudioProcessor = () => {
       source.start(0, startTime);
       setSourceNode(source);
       setIsPlaying(true);
-      startTimeRef.current = context.currentTime - startTime;
+
+      // Set audio position and frame time for delta calculation
+      audioPositionRef.current = startTime;
+      lastFrameTimeRef.current = context.currentTime;
     },
     [
       context,
@@ -329,37 +348,55 @@ export const useAudioProcessor = () => {
     (clickedProgress: number) => {
       const newTime = clickedProgress * durationRef.current;
       setProgress(clickedProgress);
-      startTimeRef.current = context!.currentTime - newTime;
+      // playAudio will set audioPositionRef and lastFrameTimeRef
       playAudio(newTime);
     },
-    [playAudio, context],
+    [playAudio],
   );
 
   const handleSave = useCallback(async () => {
-    if (!audioBuffer || !nodes.reverb) return;
+    if (!audioBuffer || !nodes.reverb?.buffer) return;
 
     setIsSaving(true);
 
     try {
+      // Calculate output length for slowed audio
+      const outputLength = Math.ceil(
+        audioBuffer.length / settings.playbackRate,
+      );
       const offlineContext = new OfflineAudioContext(
         audioBuffer.numberOfChannels,
-        audioBuffer.length,
+        outputLength,
         audioBuffer.sampleRate,
       );
 
       const source = offlineContext.createBufferSource();
       source.buffer = audioBuffer;
+      source.playbackRate.value = settings.playbackRate;
 
-      const gain = offlineContext.createGain();
-      gain.gain.value = settings.volume / 100;
-
+      // Create gain nodes for mixing
+      const masterGain = offlineContext.createGain();
+      const dryGain = offlineContext.createGain();
+      const wetGain = offlineContext.createGain();
       const convolver = offlineContext.createConvolver();
+
+      // Set levels
+      masterGain.gain.value = settings.volume / 100;
+      const reverbMix = settings.reverbLevel / 100;
+      dryGain.gain.value = 1 - reverbMix;
+      wetGain.gain.value = reverbMix;
       convolver.buffer = nodes.reverb.buffer;
 
-      source
-        .connect(convolver)
-        .connect(gain)
-        .connect(offlineContext.destination);
+      // Dry path: source -> dryGain -> masterGain -> destination
+      source.connect(dryGain);
+      dryGain.connect(masterGain);
+
+      // Wet path: source -> convolver -> wetGain -> masterGain -> destination
+      source.connect(convolver);
+      convolver.connect(wetGain);
+      wetGain.connect(masterGain);
+
+      masterGain.connect(offlineContext.destination);
       source.start(0);
 
       const renderedBuffer = await offlineContext.startRendering();
@@ -370,7 +407,7 @@ export const useAudioProcessor = () => {
 
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `${filename || "processed-audio"}-slowed.wav`;
+      anchor.download = `${filename || "processed-audio"}-lofi.wav`;
       anchor.click();
 
       URL.revokeObjectURL(url);
@@ -379,7 +416,14 @@ export const useAudioProcessor = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [audioBuffer, nodes.reverb, settings.volume, filename]);
+  }, [
+    audioBuffer,
+    nodes.reverb,
+    settings.volume,
+    settings.playbackRate,
+    settings.reverbLevel,
+    filename,
+  ]);
 
   // Cleanup
   useEffect(() => {

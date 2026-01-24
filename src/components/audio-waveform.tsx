@@ -3,7 +3,7 @@
 import { useEffect, useRef, memo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
-import { Upload } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 
 // Custom hook for handling canvas operations
 const useWaveformCanvas = (
@@ -30,12 +30,13 @@ const useWaveformCanvas = (
       const blockSize = Math.floor(channelData.length / width);
       const waveformData = new Float32Array(width * 2);
 
+      // First pass: calculate min/max for each block and find peak
+      let peakValue = 0;
       for (let i = 0; i < width; i++) {
         let min = 1.0;
         let max = -1.0;
         const startIndex = i * blockSize;
 
-        // Use TypedArray methods for better performance
         for (
           let j = 0;
           j < blockSize && startIndex + j < channelData.length;
@@ -48,6 +49,13 @@ const useWaveformCanvas = (
 
         waveformData[i * 2] = max;
         waveformData[i * 2 + 1] = min;
+        peakValue = Math.max(peakValue, Math.abs(max), Math.abs(min));
+      }
+
+      // Normalize to use full height (with small margin)
+      const normalizeScale = peakValue > 0 ? 0.95 / peakValue : 1;
+      for (let i = 0; i < waveformData.length; i++) {
+        waveformData[i] *= normalizeScale;
       }
 
       return waveformData;
@@ -83,8 +91,8 @@ const useWaveformCanvas = (
       offscreenCanvas.width = canvas.width;
       offscreenCanvas.height = canvas.height;
 
-      offscreenCtx.fillStyle = "rgb(0, 0, 0)";
-      offscreenCtx.fillRect(0, 0, canvas.width, canvas.height);
+      // Clear with transparent background
+      offscreenCtx.clearRect(0, 0, canvas.width, canvas.height);
 
       const amp = canvas.height / 2;
       offscreenCtx.beginPath();
@@ -116,8 +124,11 @@ const useWaveformCanvas = (
     const canvas = canvasRef.current;
     if (!canvas || !buffer) return;
 
-    const ctx = canvas.getContext("2d", { alpha: false });
+    const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx || !baseImageRef.current) return;
+
+    // Clear canvas for transparent background
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw base waveform
     ctx.putImageData(baseImageRef.current, 0, 0);
@@ -291,7 +302,7 @@ function AudioWaveform({
             className="absolute top-2 right-2 cursor-pointer"
             onClick={openFilePicker}
           >
-            <Upload className="h-6 w-6 text-white" />
+            <FolderOpen className="h-6 w-6 text-white" />
           </button>
         </>
       )}
