@@ -43,6 +43,47 @@ Head to [**Releases**](https://github.com/ph33nx/lila-player/releases) and downl
 
 ---
 
+## ❓ Installation FAQ
+
+> **Why isn't the app signed?**  
+> Lila is a free, open source project. Code signing certificates cost $99–$400/year from Apple and Microsoft. We'd rather spend that on coffee. ☕ You can always [build from source](#-development) if you prefer.
+
+<details>
+<summary><b>macOS: "Lila Player is damaged and can't be opened"</b></summary>
+
+macOS quarantines unsigned apps downloaded from the internet. To fix:
+
+```bash
+xattr -d com.apple.quarantine /Applications/Lila\ Player.app
+```
+
+Then open Lila Player again.
+</details>
+
+<details>
+<summary><b>Windows: "Windows protected your PC" (SmartScreen)</b></summary>
+
+Windows SmartScreen blocks unsigned apps. To run anyway:
+
+1. Click **"More info"**
+2. Click **"Run anyway"**
+
+If "Run anyway" doesn't appear: Right-click the installer → Properties → check **"Unblock"** → Apply.
+</details>
+
+<details>
+<summary><b>Linux: AppImage won't run</b></summary>
+
+Make it executable first:
+
+```bash
+chmod +x Lila.Player-*.AppImage
+./Lila.Player-*.AppImage
+```
+</details>
+
+---
+
 ## 📦 Versioning
 
 Update version in both `package.json` and `src-tauri/tauri.conf.json`. Pushing to `master` triggers GitHub Actions to build and release binaries automatically.
@@ -128,7 +169,6 @@ sudo pacman -S webkit2gtk-4.1 base-devel curl wget file openssl appmenu-gtk-modu
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start Next.js dev server |
 | `npm run tauri dev` | Start Tauri app in dev mode |
 | `npm run tauri build` | Build production desktop app |
 | `npm run lint` | Run ESLint |
