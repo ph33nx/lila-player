@@ -65,4 +65,4 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
-          releaseAssetNamePattern: '[name]-[version]-[platform]-[arch][ext]'
+          assetNamePattern: 'Lila-Player-__VERSION__-[platform]-[arch][ext]'

@@ -1,7 +1,8 @@
 {
   "name": "lila-player",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
+  "license": "MIT",
   "author": {
     "name": "ph33nx",
     "url": "https://github.com/ph33nx/lila-player"

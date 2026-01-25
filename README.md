@@ -46,7 +46,7 @@ Head to [**Releases**](https://github.com/ph33nx/lila-player/releases) and downl
 ## ❓ Installation FAQ
 
 > **Why isn't the app signed?**  
-> Lila is a free, open source project. Code signing certificates cost $99–$400/year from Apple and Microsoft. We'd rather spend that on coffee. ☕ You can always [build from source](#-development) if you prefer.
+> Lila is a free, open source project. Code signing certificates cost $99–$400/year from Apple and Microsoft. We'd rather spend that on coffee. ☕ You can always [build from source](#%EF%B8%8F-development) if you prefer.
 
 <details>
 <summary><b>macOS: "Lila Player is damaged and can't be opened"</b></summary>
@@ -142,7 +142,7 @@ sudo dnf install webkit2gtk4.1-devel openssl-devel curl wget file libappindicato
 sudo pacman -S webkit2gtk-4.1 base-devel curl wget file openssl appmenu-gtk-module libappindicator-gtk3 librsvg
 ```
 
-## Development
+## Environment Setup & Running
 
 1. **Clone the repository:**
    ```bash
