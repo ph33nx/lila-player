@@ -55,7 +55,7 @@ jobs:
         run: npm ci
 
       - name: Build and release
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -65,4 +65,4 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
-          assetNamePattern: 'Lila-Player-__VERSION__-[platform]-[arch][ext]'
+          releaseAssetNamePattern: '[name]-[version]-[platform]-[arch][ext]'
