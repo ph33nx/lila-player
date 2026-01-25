@@ -61,7 +61,17 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: 'Lila Player v__VERSION__'
-          releaseBody: 'Download and install Lila Player for your platform.'
+          releaseBody: |
+            Download and install Lila Player for your platform.
+            
+            | File Format | Platform | Architecture |
+            |------------|----------|--------------|
+            | `.dmg` | macOS | Intel (x86_64) or Apple Silicon (aarch64) |
+            | `.AppImage` | Linux | x86_64 |
+            | `.deb` | Debian/Ubuntu Linux | x86_64 |
+            | `.rpm` | Fedora/RHEL Linux | x86_64 |
+            | `.msi` | Windows | x86_64 |
+            | `.exe` | Windows (installer) | x86_64 |
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
