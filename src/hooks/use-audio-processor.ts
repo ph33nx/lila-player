@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { audioBufferToWav, loadImpulseResponse } from "../utils/audio-utils";
+import { useMediaSession } from "./use-media-session";
 
 // Custom hook for managing audio context and base nodes
 const useAudioContext = () => {
@@ -343,6 +344,26 @@ export const useAudioProcessor = () => {
       playAudio(progress * durationRef.current);
     }
   }, [isPlaying, stopAudio, playAudio, progress]);
+
+  // Media session for system media keys
+  const handleMediaPlay = useCallback(() => {
+    if (!isPlaying && audioBuffer) {
+      playAudio(progress * durationRef.current);
+    }
+  }, [isPlaying, audioBuffer, playAudio, progress]);
+
+  const handleMediaPause = useCallback(() => {
+    if (isPlaying) {
+      stopAudio();
+    }
+  }, [isPlaying, stopAudio]);
+
+  useMediaSession({
+    title: filename ? `${filename} - Lila Player` : "Lila Player",
+    isPlaying,
+    onPlay: handleMediaPlay,
+    onPause: handleMediaPause,
+  });
 
   const handleWaveformClick = useCallback(
     (clickedProgress: number) => {
