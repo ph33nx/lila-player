@@ -4,6 +4,11 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { audioBufferToWav, loadImpulseResponse } from "../utils/audio-utils";
 import { useMediaSession } from "./use-media-session";
 
+// WebKitGTK (Tauri on Linux) has a broken AudioContext.destination that produces silence.
+// Detect once and use <audio> element for playback on Linux as a workaround.
+const IS_LINUX =
+  typeof navigator !== "undefined" && /Linux/.test(navigator.userAgent);
+
 // Custom hook for managing audio context and base nodes
 const useAudioContext = () => {
   const [context, setContext] = useState<AudioContext | null>(null);
@@ -27,6 +32,14 @@ const useAudioContext = () => {
     const reverbGain = audioContext.createGain();
     const dryGain = audioContext.createGain();
     const convolver = audioContext.createConvolver();
+
+    if (IS_LINUX) {
+      console.log(
+        "[Audio] Linux detected — using <audio> element playback (WebKitGTK workaround)",
+      );
+    } else {
+      console.log("[Audio] Using native AudioContext.destination");
+    }
 
     setContext(audioContext);
     setNodes({
@@ -64,19 +77,28 @@ const useVinylSound = (
 
   // Setup vinyl audio and connections
   useEffect(() => {
-    if (!context || !destinationNode) return;
+    if (!context) return;
+    // On Windows/Mac we need the gain node for Web Audio routing
+    if (!IS_LINUX && !destinationNode) return;
 
     const vinylAudio = new Audio("/audio/vinyl.mp3");
     vinylAudio.loop = true;
     vinylRef.current = vinylAudio;
 
-    const vinylSource = context.createMediaElementSource(vinylAudio);
-    sourceRef.current = vinylSource;
-    vinylSource.connect(destinationNode).connect(context.destination);
+    if (!IS_LINUX && destinationNode) {
+      // Windows/Mac: route through Web Audio graph for mixing
+      const vinylSource = context.createMediaElementSource(vinylAudio);
+      sourceRef.current = vinylSource;
+      vinylSource.connect(destinationNode).connect(context.destination);
+    }
+    // Linux: play the <audio> element directly — no Web Audio routing needed
 
     return () => {
       vinylAudio.pause();
-      vinylSource.disconnect();
+      if (sourceRef.current) {
+        sourceRef.current.disconnect();
+        sourceRef.current = null;
+      }
     };
   }, [context, destinationNode]);
 
@@ -151,6 +173,10 @@ export const useAudioProcessor = () => {
   const progressEmitter = useRef<EventTarget>(new EventTarget());
   const playbackRateRef = useRef<number>(settings.playbackRate); // Avoid stale closure in animation frame
 
+  // Linux-only: <audio> element for direct playback
+  const linuxAudioRef = useRef<HTMLAudioElement | null>(null);
+  const fileBlobUrlRef = useRef<string | null>(null);
+
   // Keep playbackRateRef in sync
   useEffect(() => {
     playbackRateRef.current = settings.playbackRate;
@@ -177,9 +203,25 @@ export const useAudioProcessor = () => {
     nodes.dryGain.gain.value = 1 - reverbLevel;
   }, [nodes.reverbGain, nodes.dryGain, settings.reverbLevel]);
 
+  // Linux: sync playbackRate and volume to the <audio> element
+  useEffect(() => {
+    if (!IS_LINUX || !linuxAudioRef.current) return;
+    linuxAudioRef.current.playbackRate = settings.playbackRate;
+  }, [settings.playbackRate]);
+
+  useEffect(() => {
+    if (!IS_LINUX || !linuxAudioRef.current) return;
+    linuxAudioRef.current.volume = Math.min(settings.volume / 100, 1);
+  }, [settings.volume]);
+
+  useEffect(() => {
+    if (!IS_LINUX || !linuxAudioRef.current) return;
+    linuxAudioRef.current.loop = settings.isLooping;
+  }, [settings.isLooping]);
+
   // Optimized progress update function - tracks audio position directly
   const updateProgress = useCallback(() => {
-    if (!context || !durationRef.current) {
+    if (!durationRef.current) {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
@@ -187,17 +229,25 @@ export const useAudioProcessor = () => {
       return;
     }
 
-    // Calculate delta time since last frame
-    const now = context.currentTime;
-    const deltaTime = now - lastFrameTimeRef.current;
-    lastFrameTimeRef.current = now;
+    let newProgress: number;
 
-    // Advance audio position by delta * playbackRate (use ref to avoid stale closure)
-    audioPositionRef.current += deltaTime * playbackRateRef.current;
-    const newProgress = Math.min(
-      audioPositionRef.current / durationRef.current,
-      1,
-    );
+    if (IS_LINUX && linuxAudioRef.current) {
+      // Linux: read position directly from <audio> element
+      newProgress = Math.min(
+        linuxAudioRef.current.currentTime / durationRef.current,
+        1,
+      );
+    } else if (context) {
+      // Windows/Mac: calculate from delta time
+      const now = context.currentTime;
+      const deltaTime = now - lastFrameTimeRef.current;
+      lastFrameTimeRef.current = now;
+
+      audioPositionRef.current += deltaTime * playbackRateRef.current;
+      newProgress = Math.min(audioPositionRef.current / durationRef.current, 1);
+    } else {
+      return;
+    }
 
     // Only update if progress has changed
     if (Math.abs(newProgress - progress) > 0.001) {
@@ -206,8 +256,8 @@ export const useAudioProcessor = () => {
       progressEmitter.current.dispatchEvent(event);
     }
 
-    // Handle end of audio
-    if (newProgress >= 1) {
+    // Handle end of audio (Windows/Mac path — Linux uses <audio>.loop and ended event)
+    if (!IS_LINUX && newProgress >= 1) {
       if (!settings.isLooping) {
         audioPositionRef.current = 0;
         setProgress(0);
@@ -256,11 +306,17 @@ export const useAudioProcessor = () => {
 
   // Audio control functions
   const stopAudio = useCallback(() => {
-    if (sourceNode) {
-      sourceNode.stop();
-      sourceNode.disconnect();
+    if (IS_LINUX) {
+      if (linuxAudioRef.current) {
+        linuxAudioRef.current.pause();
+      }
+    } else {
+      if (sourceNode) {
+        sourceNode.stop();
+        sourceNode.disconnect();
+      }
+      setSourceNode(null);
     }
-    setSourceNode(null);
     setIsPlaying(false);
   }, [sourceNode, setIsPlaying]);
 
@@ -298,16 +354,40 @@ export const useAudioProcessor = () => {
 
       stopAudio();
 
-      const source = context.createBufferSource();
-      source.buffer = audioBuffer;
-      source.loop = settings.isLooping;
-      source.playbackRate.value = settings.playbackRate;
+      if (IS_LINUX) {
+        // Linux: play via <audio> element (WebKitGTK workaround)
+        const el = linuxAudioRef.current;
+        if (!el || !el.src) {
+          console.warn("[Audio] Linux: no <audio> element or src available");
+          return;
+        }
+        el.currentTime = startTime;
+        el.playbackRate = settings.playbackRate;
+        el.volume = Math.min(settings.volume / 100, 1);
+        el.loop = settings.isLooping;
+        await el
+          .play()
+          .catch((err) => console.error("[Audio] Linux playback failed:", err));
+        setIsPlaying(true);
+        console.log(
+          "[Audio] Linux: playback started at",
+          startTime.toFixed(2),
+          "s, rate:",
+          settings.playbackRate,
+        );
+      } else {
+        // Windows/Mac: play via Web Audio API
+        const source = context.createBufferSource();
+        source.buffer = audioBuffer;
+        source.loop = settings.isLooping;
+        source.playbackRate.value = settings.playbackRate;
 
-      connectAudioNodes(source);
+        connectAudioNodes(source);
 
-      source.start(0, startTime);
-      setSourceNode(source);
-      setIsPlaying(true);
+        source.start(0, startTime);
+        setSourceNode(source);
+        setIsPlaying(true);
+      }
 
       // Set audio position and frame time for delta calculation
       audioPositionRef.current = startTime;
@@ -318,6 +398,7 @@ export const useAudioProcessor = () => {
       audioBuffer,
       settings.isLooping,
       settings.playbackRate,
+      settings.volume,
       stopAudio,
       connectAudioNodes,
       setIsPlaying,
@@ -345,13 +426,45 @@ export const useAudioProcessor = () => {
         setFilename(file.name);
         durationRef.current = decodedBuffer.duration;
         setProgress(0);
+
+        if (IS_LINUX) {
+          // Create blob URL and set up <audio> element for Linux playback
+          if (fileBlobUrlRef.current) {
+            URL.revokeObjectURL(fileBlobUrlRef.current);
+          }
+          const blobUrl = URL.createObjectURL(file);
+          fileBlobUrlRef.current = blobUrl;
+
+          if (!linuxAudioRef.current) {
+            const el = new Audio();
+            el.addEventListener("ended", () => {
+              setIsPlaying(false);
+              setProgress(0);
+            });
+            linuxAudioRef.current = el;
+          }
+          linuxAudioRef.current.src = blobUrl;
+          linuxAudioRef.current.load();
+          console.log(
+            "[Audio] Linux: file loaded via <audio> element:",
+            file.name,
+          );
+        }
+
+        console.log(
+          "[Audio] File decoded:",
+          file.name,
+          "duration:",
+          decodedBuffer.duration.toFixed(2),
+          "s",
+        );
       } catch (error) {
         console.error("Error processing audio file:", error);
       } finally {
         setIsWaveformLoading(false);
       }
     },
-    [context, stopAudio],
+    [context, stopAudio, setIsPlaying],
   );
 
   const handlePlayPause = useCallback(() => {
@@ -469,6 +582,13 @@ export const useAudioProcessor = () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
+      }
+      if (fileBlobUrlRef.current) {
+        URL.revokeObjectURL(fileBlobUrlRef.current);
+      }
+      if (linuxAudioRef.current) {
+        linuxAudioRef.current.pause();
+        linuxAudioRef.current = null;
       }
     };
   }, []);
