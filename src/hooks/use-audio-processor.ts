@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { audioBufferToWav, loadImpulseResponse } from "../utils/audio-utils";
 import { useMediaSession } from "./use-media-session";
+import { withBasePath } from "../utils/base-path";
 
 // Custom hook for managing audio context and base nodes
 const useAudioContext = () => {
@@ -36,7 +37,7 @@ const useAudioContext = () => {
       dryGain,
     });
 
-    loadImpulseResponse(audioContext, "/audio/impulse.wav")
+    loadImpulseResponse(audioContext, withBasePath("/audio/impulse.wav"))
       .then((buffer: AudioBuffer) => {
         convolver.buffer = buffer;
       })
@@ -66,7 +67,7 @@ const useVinylSound = (
   useEffect(() => {
     if (!context || !destinationNode) return;
 
-    const vinylAudio = new Audio("/audio/vinyl.mp3");
+    const vinylAudio = new Audio(withBasePath("/audio/vinyl.mp3"));
     vinylAudio.loop = true;
     vinylRef.current = vinylAudio;
 
