@@ -133,7 +133,7 @@ sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
 ### Linux Only (Fedora)
 
 ```bash
-sudo dnf install webkit2gtk4.1-devel openssl-devel curl wget file libappindicator-gtk3-devel librsvg2-devel
+sudo dnf install gcc make pkg-config openssl-devel webkit2gtk4.1-devel gtk3-devel librsvg2-devel
 ```
 
 ### Linux Only (Arch/Manjaro)

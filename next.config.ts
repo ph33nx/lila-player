@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
   },
   // Configure assetPrefix or else the server won't properly resolve your assets.
   assetPrefix: isProd ? undefined : `http://${internalHost}:3123`,
+  // Set basePath for GitHub Pages deployment (auto-set by actions/configure-pages)
+  basePath: process.env.PAGES_BASE_PATH || "",
 };
 
 export default nextConfig;
