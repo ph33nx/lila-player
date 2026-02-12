@@ -82,18 +82,25 @@ const useVinylSound = (
 
   // Control vinyl playback based on isPlaying state
   useEffect(() => {
-    if (!vinylRef.current) return;
+    if (!vinylRef.current || !context) return;
 
     vinylRef.current.volume = volume / 100;
 
     if (isPlaying) {
-      vinylRef.current
-        .play()
-        .catch((err) => console.warn("Vinyl playback interrupted:", err));
+      // Ensure AudioContext is resumed before playing vinyl audio
+      const startVinyl = async () => {
+        if (context.state === "suspended") {
+          await context.resume();
+        }
+        vinylRef.current
+          ?.play()
+          .catch((err) => console.warn("Vinyl playback interrupted:", err));
+      };
+      startVinyl();
     } else {
       vinylRef.current.pause();
     }
-  }, [isPlaying, volume]);
+  }, [isPlaying, volume, context]);
 };
 
 // Custom hook for managing audio playback state
@@ -281,8 +288,13 @@ export const useAudioProcessor = () => {
   );
 
   const playAudio = useCallback(
-    (startTime: number) => {
+    async (startTime: number) => {
       if (!context || !audioBuffer) return;
+
+      // Resume AudioContext if suspended (required by WebKitGTK autoplay policy on Linux)
+      if (context.state === "suspended") {
+        await context.resume();
+      }
 
       stopAudio();
 
@@ -316,6 +328,11 @@ export const useAudioProcessor = () => {
   const handleFileChange = useCallback(
     async (file: File) => {
       if (!context) return;
+
+      // Resume AudioContext on user gesture (file selection) for WebKitGTK compatibility
+      if (context.state === "suspended") {
+        await context.resume();
+      }
 
       stopAudio();
       setIsWaveformLoading(true);
