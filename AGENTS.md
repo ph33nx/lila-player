@@ -54,6 +54,11 @@ src-tauri/         # Rust/Tauri backend
 - Workflow: `.github/workflows/publish.yml`
 - Builds for: Windows (.msi/.exe), macOS (.dmg Intel & Apple Silicon), Linux (.AppImage/.deb/.rpm)
 
+## Dependency & Security Maintenance
+
+- Periodic dependency upgrades + Dependabot alerts (npm and Cargo): follow `docs/dependencies.md`
+- It has the hold list (majors that need a deliberate migration), the verify gate, the postcss/glib traps, and the last-run baseline
+
 ## Guidelines
 
 - Audio processing uses Web Audio API in the frontend
