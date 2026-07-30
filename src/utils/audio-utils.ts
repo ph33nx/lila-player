@@ -42,6 +42,53 @@ export const audioBufferToWav = (buffer: AudioBuffer): ArrayBuffer => {
   return result;
 };
 
+export const audioBufferToMp3 = async (
+  buffer: AudioBuffer,
+  kbps: number = 192,
+): Promise<Blob> => {
+  const { Mp3Encoder } = await import("@breezystack/lamejs");
+
+  const numChannels = Math.min(buffer.numberOfChannels, 2);
+  const sampleRate = buffer.sampleRate;
+  const encoder = new Mp3Encoder(numChannels, sampleRate, kbps);
+
+  const floatToPcm16 = (channelData: Float32Array): Int16Array => {
+    const pcm = new Int16Array(channelData.length);
+    for (let i = 0; i < channelData.length; i++) {
+      const sample = Math.max(-1, Math.min(1, channelData[i]));
+      pcm[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+    }
+    return pcm;
+  };
+
+  const left = floatToPcm16(buffer.getChannelData(0));
+  const right =
+    numChannels > 1 ? floatToPcm16(buffer.getChannelData(1)) : undefined;
+
+  const blockSize = 1152;
+  const mp3Chunks: Uint8Array[] = [];
+
+  for (let i = 0; i < left.length; i += blockSize) {
+    const leftChunk = left.subarray(i, i + blockSize);
+    const rightChunk = right ? right.subarray(i, i + blockSize) : undefined;
+
+    const mp3buf = rightChunk
+      ? encoder.encodeBuffer(leftChunk, rightChunk)
+      : encoder.encodeBuffer(leftChunk);
+
+    if (mp3buf.length > 0) {
+      mp3Chunks.push(new Uint8Array(mp3buf));
+    }
+  }
+
+  const finalBuf = encoder.flush();
+  if (finalBuf.length > 0) {
+    mp3Chunks.push(new Uint8Array(finalBuf));
+  }
+
+  return new Blob(mp3Chunks as unknown as BlobPart[], { type: "audio/mp3" });
+};
+
 export const loadImpulseResponse = async (
   context: AudioContext,
   url: string,

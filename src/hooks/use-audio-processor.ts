@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { audioBufferToWav, loadImpulseResponse } from "../utils/audio-utils";
+import {
+  audioBufferToWav,
+  audioBufferToMp3,
+  loadImpulseResponse,
+} from "../utils/audio-utils";
 import { useMediaSession } from "./use-media-session";
 import { withBasePath } from "../utils/base-path";
 
@@ -326,11 +330,11 @@ export const useAudioProcessor = () => {
   );
 
   // Event handlers
-  const handleFileChange = useCallback(
-    async (file: File) => {
+  const loadAudioSource = useCallback(
+    async (data: ArrayBuffer, name: string) => {
       if (!context) return;
 
-      // Resume AudioContext on user gesture (file selection) for WebKitGTK compatibility
+      // Resume AudioContext on user gesture for WebKitGTK compatibility
       if (context.state === "suspended") {
         await context.resume();
       }
@@ -339,11 +343,10 @@ export const useAudioProcessor = () => {
       setIsWaveformLoading(true);
 
       try {
-        const audioData = await file.arrayBuffer();
-        const decodedBuffer = await context.decodeAudioData(audioData);
+        const decodedBuffer = await context.decodeAudioData(data.slice(0));
 
         setAudioBuffer(decodedBuffer);
-        setFilename(file.name);
+        setFilename(name);
         durationRef.current = decodedBuffer.duration;
         setProgress(0);
       } catch (error) {
@@ -353,6 +356,22 @@ export const useAudioProcessor = () => {
       }
     },
     [context, stopAudio],
+  );
+
+  const handleFileChange = useCallback(
+    async (file: File) => {
+      const audioData = await file.arrayBuffer();
+      await loadAudioSource(audioData, file.name);
+    },
+    [loadAudioSource],
+  );
+
+  const handleBlobImport = useCallback(
+    async (blob: Blob, name: string) => {
+      const audioData = await blob.arrayBuffer();
+      await loadAudioSource(audioData, name);
+    },
+    [loadAudioSource],
   );
 
   const handlePlayPause = useCallback(() => {
@@ -393,7 +412,7 @@ export const useAudioProcessor = () => {
     [playAudio],
   );
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (format: "mp3" | "wav" = "mp3") => {
     if (!audioBuffer || !nodes.reverb?.buffer) return;
 
     setIsSaving(true);
@@ -439,14 +458,20 @@ export const useAudioProcessor = () => {
       source.start(0);
 
       const renderedBuffer = await offlineContext.startRendering();
-      const wav = audioBufferToWav(renderedBuffer);
 
-      const blob = new Blob([new DataView(wav)], { type: "audio/wav" });
+      let blob: Blob;
+      if (format === "mp3") {
+        blob = await audioBufferToMp3(renderedBuffer, 192);
+      } else {
+        const wav = audioBufferToWav(renderedBuffer);
+        blob = new Blob([new DataView(wav)], { type: "audio/wav" });
+      }
+
       const url = URL.createObjectURL(blob);
 
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `${filename || "processed-audio"}-lofi.wav`;
+      anchor.download = `${filename || "processed-audio"}-lofi.${format}`;
       anchor.click();
 
       URL.revokeObjectURL(url);
@@ -476,6 +501,7 @@ export const useAudioProcessor = () => {
 
   return {
     handleFileChange,
+    handleBlobImport,
     handlePlayPause,
     handleWaveformClick,
     handleSave,
