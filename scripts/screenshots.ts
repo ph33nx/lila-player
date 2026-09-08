@@ -239,7 +239,10 @@ const run = async (): Promise<void> => {
       await page.emulateMedia({ colorScheme: scheme });
       await walk(page, async (name) => {
         if (name === "10-loop-points") {
-          await page.screenshot({ path: `assets/screenshot-${scheme}.png` });
+          await page.screenshot({
+            path: `assets/screenshot-${scheme}.png`,
+            fullPage: true,
+          });
         }
       });
       await page.close();

@@ -3,6 +3,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "./ui/button";
 import type { LoopRegion, Subscribe, TrackInfo } from "@/engine";
+import { useThemeChange } from "@/hooks/use-theme-change";
 import { AUDIO_FORMATS } from "@/utils/audio-file";
 import { readCssToken } from "@/utils/css-token";
 import { formatTime } from "@/utils/time";
@@ -172,18 +173,12 @@ const AudioWaveform: React.FC<AudioWaveformProps> = memo(
       draw();
     }, [draw, getPosition]);
 
-    // The tokens change with the theme class on <html>; drop the cached palette.
-    useEffect(() => {
-      const observer = new MutationObserver(() => {
+    useThemeChange(
+      useCallback(() => {
         paletteRef.current = null;
         draw();
-      });
-      observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ["class"],
-      });
-      return () => observer.disconnect();
-    }, [draw]);
+      }, [draw]),
+    );
 
     useEffect(
       () =>

@@ -27,7 +27,7 @@ const ThemeToggle: React.FC = () => {
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
       aria-pressed={dark}
       onClick={() => setTheme(dark ? "light" : "dark")}
-      className="fixed bottom-3 right-3 z-40 h-8 w-8"
+      className="h-8 w-8"
     >
       <Icon className="h-4 w-4" />
     </Button>

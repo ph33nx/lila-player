@@ -40,6 +40,7 @@ Playwright does not collect it.
 - `load.spec.ts` — both "Open audio" buttons, name, length, canvas drawn, no error.
 - `theme.spec.ts` — device scheme by default, toggle switches, choice survives reload.
 - `a11y.spec.ts` — axe WCAG A/AA scan (contrast included) of the empty and full player, dark and light.
+- `aura.spec.ts` — active only while playing, pointer-transparent, still under reduced motion.
 - `playback.spec.ts` — Play/Pause labelling, the clock running and freezing,
   Space and ArrowRight, restarting after the natural end.
 - `seek.spec.ts` — clicking and dragging the waveform; a seek while playing
@@ -144,6 +145,5 @@ workflows themselves.
 
 ## Intentionally untested
 
-shadcn/ui primitives (upstream's, unmodified), animations, and screenshots.
-Visual regression on a waveform canvas costs more in flake than it finds; the
-facts worth pinning — peaks, positions, loop regions — are pinned directly.
+shadcn/ui primitives (upstream's, unmodified), animations, and screenshots: visual
+regression on a canvas flakes more than it finds; peaks, positions and loop regions are pinned directly.

@@ -6,6 +6,7 @@
  * The README's FAQ section is this same list; `web-faq.test.ts` keeps them identical.
  */
 
+import { IS_WEB } from "@/utils/site";
 export const faq = [
   {
     question: "Is Lila Player free?",
@@ -63,7 +64,7 @@ const faqJsonLd = {
 };
 
 const WebFaq = () => {
-  if (process.env.NEXT_PUBLIC_TARGET !== "web") return null;
+  if (!IS_WEB) return null;
 
   return (
     <section

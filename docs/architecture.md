@@ -2,8 +2,7 @@
 
 ## The engine/UI boundary
 
-Audio state lives in `src/engine`, a plain TypeScript module with no React import.
-The UI observes it through two channels:
+Audio state lives in `src/engine`, plain TypeScript with no React; the UI observes it two ways:
 
 - **Snapshot** — `getSnapshot()` returns a frozen `EngineSnapshot` (state, params,
   track, error, exporting). The _same object reference_ comes back until one of those
@@ -14,15 +13,12 @@ The UI observes it through two channels:
   redraws from the event, and the time label only calls `setState` when the formatted
   `m:ss` string actually changes (once a second, not sixty times).
 
-`usePlayer()` (`src/hooks/use-player.ts`) is the only glue. It creates one engine per
-mount, disposes it on unmount, subscribes React to `state` events only, and returns
-the snapshot plus command callbacks whose identity never changes — so
-`memo(PlayerControls)` actually holds.
+`usePlayer()` (`src/hooks/use-player.ts`) is the only glue: one engine per mount,
+React subscribed to `state` events only, and stable command callbacks so `memo` holds.
 
-Why this split: the engine owns mutable audio hardware (an `AudioContext`, one source
-node, a playhead) whose lifetime has nothing to do with the render cycle. Encoding it
-in hooks produced stale closures over `progress`, `isPlaying` and `isLooping`; see
-`docs/audio-engine.md` for the defects that cost.
+Why this split: the engine owns mutable audio hardware whose lifetime has nothing to
+do with the render cycle; encoding it in hooks produced stale closures (see
+`docs/audio-engine.md`).
 
 ## File map
 
@@ -40,6 +36,7 @@ src/engine/
 src/hooks/
   use-player.ts        engine <-> React binding, and the one file gate (isAudioFile)
   use-media-session.ts OS media keys
+  use-theme-change.ts  observes the theme class so canvases refresh their tokens
   use-shortcuts.ts     window-level transport keys
   use-file-drop.ts     window-wide drop target, returns { isDragging, isRejected }
   use-desktop-shell.ts Tauri-only chrome: context menu, macOS drag strip
@@ -55,9 +52,11 @@ src/components/
   drop-overlay.tsx     full-window drop affordance (presentation only)
   status-line.tsx      the one message slot: error outranks the saved notice
   theme-provider.tsx   next-themes: class attribute, system default, persisted
-  theme-toggle.tsx     light or dark, shows the scheme in effect, bottom right
+  theme-toggle.tsx     light or dark, shows the scheme in effect
+  corner-controls.tsx  bottom-right cluster: theme switch; on the web also source and download links
   web-faq.tsx          the README FAQ and its FAQPage JSON-LD, web build only
   level-mark.tsx       the lilac mark, breathing with getLevel() while playing
+  aura.tsx             four overlapping colour fields on an eighth-res canvas, swelling with getLevel()
   motion-provider.tsx  MotionConfig reducedMotion="user"
   ui/                  shadcn/ui primitives
 
@@ -66,6 +65,7 @@ src/utils/
   time.ts              formatTime
   download.ts          downloadBlob
   css-token.ts         readCssToken, so canvases paint with the DOM's tokens
+  site.ts              SITE_URL, REPO_URL, RELEASES_URL and the IS_WEB build guard
 
 src/app/               layout.tsx (metadata, providers), page.tsx (composition)
 src/lib/utils.ts       cn(), the class-name merger shadcn primitives expect
@@ -84,11 +84,18 @@ Three rules keep the render cost flat while the audio runs:
   bitmap `clientWidth * devicePixelRatio`, and the column count (one bar per 3
   CSS px) is what `engine.getPeaks(columns)` is asked for. The engine caches per
   column count, so a resize costs one pass and a repeat size costs nothing.
-- **Theme.** Colour tokens live on `:root` (light) and `.dark` in `globals.css`;
-  `next-themes` toggles the class, defaults to the device scheme, and persists an
-  explicit choice under the localStorage key `theme`, which is the app's only
-  persisted setting today. The waveform canvas caches the tokens it reads and drops
-  that cache when the `<html>` class changes, so it repaints in the new palette.
+- **Theme.** Tokens live on `:root` (light) and `.dark` in `globals.css`; `next-themes`
+  toggles the class, defaults to the device scheme, and persists a choice under the
+  localStorage key `theme` (the only persisted setting). Canvases cache the tokens
+  they read and drop the cache on `useThemeChange`, so they repaint in the new palette.
+- **Per-frame work never touches React or styles.** The waveform and the level
+  mark and the aura all paint on canvases. The aura paints four overlapping radial
+  fields on an eighth-resolution canvas every other frame (the upscale is the blur;
+  screen blending in dark mode). The swell follows a slow envelope of the level and
+  may move at most 1.5 % per painted frame, so a full swing takes over two seconds
+  and it cannot flash (WCAG 2.3.1). Web Animations were tried first and cost a
+  style recalc per frame in headless Chromium, which the efficiency spec rejected;
+  that spec pins the rule that layout and style counts stay flat in playback.
 - **One fixed-height message slot.** Errors and the export notice share a single
   `h-4` line below the transport that is always mounted, so no message can move a
   control. `exportWav()` resolves with the file name it saved, so the notice needs
@@ -109,9 +116,6 @@ an effect because the static export is prerendered without a window.
 events with `dataTransfer.files` instead of Tauri's native drag-drop handler
 swallowing them, and the macOS drag strip needs
 `core:window:allow-start-dragging`, which `core:window:default` does not grant.
-
-Everything pure (`position.ts`, `peaks.ts`, `wav.ts`, `graph.ts`) is testable without
-a DOM; `WebAudioEngine` is testable through the `AudioEngine` interface alone.
 
 ## Two targets, one build
 
@@ -137,12 +141,8 @@ and their capability grants were removed because nothing called them.
 
 ## Where platform code will go
 
-When the first genuinely OS-specific feature lands (recent files, a real save dialog,
-a tray control), it gets a `src/platform/` interface with a browser implementation and
-a Tauri implementation, chosen once at startup. Nothing above `src/platform/` learns
-which one it got. The interface is created with that first feature, not before.
-
-Plan B, if Web Audio in WebKitGTK proves unusable on Linux: a `TauriEngine` that
-implements the same `AudioEngine` interface against a Rust audio backend, swapped in
-`usePlayer()` and nowhere else. That is the payoff of the interface being an
-interface. See `docs/decisions.md`.
+The first OS-specific feature (recent files, a save dialog, a tray control) creates a
+`src/platform/` interface with browser and Tauri implementations chosen once at
+startup; nothing above it learns which one it got. Plan B for Linux, if Web Audio in
+WebKitGTK proves unusable: a `TauriEngine` behind the same `AudioEngine` interface,
+swapped in `usePlayer()` only. See `docs/decisions.md`.

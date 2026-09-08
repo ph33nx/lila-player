@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import MotionProvider from "@/components/motion-provider";
 import ThemeProvider from "@/components/theme-provider";
 import pkg from "../../package.json";
+import { RELEASES_URL, SITE_URL } from "@/utils/site";
 import "./globals.css";
 
-const SITE_URL = "https://ph33nx.github.io/lila-player/";
 const DESCRIPTION =
   "Lila Player is a free, open source desktop app for Windows, macOS and Linux that turns any audio file into a slowed and reverb lofi version, offline.";
 
@@ -86,7 +86,7 @@ const softwareJsonLd = {
   softwareVersion: pkg.version,
   url: SITE_URL,
   image: `${SITE_URL}og.png`,
-  downloadUrl: "https://github.com/ph33nx/lila-player/releases",
+  downloadUrl: RELEASES_URL,
   license: "https://opensource.org/license/mit",
   isAccessibleForFree: true,
   offers: {

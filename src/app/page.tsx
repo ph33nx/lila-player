@@ -4,11 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import AudioWaveform from "@/components/audio-waveform";
 import DropOverlay from "@/components/drop-overlay";
 import AdvancedPanel from "@/components/advanced-panel";
+import Aura from "@/components/aura";
 import LoopSection from "@/components/loop-section";
 import ParamGrid, { MAIN_PARAMS } from "@/components/param-grid";
 import ToneSection from "@/components/tone-section";
 import StatusLine from "@/components/status-line";
-import ThemeToggle from "@/components/theme-toggle";
+import CornerControls from "@/components/corner-controls";
 import TrackHeader from "@/components/track-header";
 import Transport from "@/components/transport";
 import WebFaq from "@/components/web-faq";
@@ -144,8 +145,9 @@ const Home = () => {
         />
       </div>
 
+      <Aura isPlaying={player.isPlaying} getLevel={player.getLevel} />
       <DropOverlay {...dropState} />
-      <ThemeToggle />
+      <CornerControls />
       <WebFaq />
     </>
   );

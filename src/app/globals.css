@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @layer base {
-  /* Light: warm paper and dusty lilac. Every pair measures at least 4.5:1 for text and 3:1 for controls. */
+  /* Light: warm paper and dusty lilac. Text holds 4.5:1 and controls 3:1 even under two overlapping aura fields at full swell. */
   :root {
     color-scheme: light;
 
@@ -12,8 +12,8 @@
     --card: 40 40% 99%;
     --card-foreground: 268 22% 12%;
     --muted: 36 22% 92%;
-    --muted-foreground: 268 8% 40%;
-    --primary: 268 44% 46%;
+    --muted-foreground: 268 8% 31%;
+    --primary: 268 44% 39%;
     --primary-foreground: 40 40% 99%;
     --secondary: 36 22% 91%;
     --secondary-foreground: 268 22% 14%;
@@ -22,9 +22,13 @@
     --destructive: 354 62% 42%;
     --destructive-foreground: 0 0% 100%;
     --border: 36 16% 84%;
-    --input: 268 8% 50%;
-    --ring: 268 44% 46%;
+    --input: 268 8% 42%;
+    --ring: 268 44% 39%;
     --wave: 268 10% 58%;
+    /* Aura fields: lilac, rose, sky. Alpha is part of the token. */
+    --aura-1: 268 85% 74% / 0.42;
+    --aura-2: 336 80% 76% / 0.39;
+    --aura-3: 206 85% 74% / 0.39;
     --radius: 0.75rem;
   }
 
@@ -47,9 +51,12 @@
     --destructive: 354 90% 76%;
     --destructive-foreground: 264 45% 8%;
     --border: 258 10% 24%;
-    --input: 258 10% 46%;
+    --input: 258 10% 50%;
     --ring: 264 92% 78%;
     --wave: 258 10% 43%;
+    --aura-1: 264 80% 62% / 0.16;
+    --aura-2: 330 65% 58% / 0.12;
+    --aura-3: 212 75% 58% / 0.12;
   }
 
   * {
@@ -58,13 +65,6 @@
 
   body {
     @apply bg-background font-sans text-foreground antialiased;
-    /* A faint lilac wash from the top gives the flat surface depth; no texture. */
-    background-image: radial-gradient(
-      120% 70% at 50% -20%,
-      hsl(var(--primary) / 0.1),
-      transparent 60%
-    );
-    background-attachment: fixed;
     overscroll-behavior: none;
   }
 }
