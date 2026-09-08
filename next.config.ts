@@ -18,10 +18,6 @@ const nextConfig: NextConfig = {
   assetPrefix: isProd ? undefined : `http://${internalHost}:3123`,
   // Set basePath for GitHub Pages deployment (auto-set by actions/configure-pages)
   basePath,
-  // Expose basePath to client-side code
-  env: {
-    NEXT_PUBLIC_BASE_PATH: basePath,
-  },
 };
 
 export default nextConfig;

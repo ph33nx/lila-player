@@ -3,130 +3,78 @@
 @tailwind utilities;
 
 @layer base {
+  /* Light: warm paper and dusty lilac. Every pair measures at least 4.5:1 for text and 3:1 for controls. */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9216%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9216%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9216%;
-    --primary: 0 0% 45.098%;
-    --primary-foreground: 0 0% 98.0392%;
-    --secondary: 0 0% 96.0784%;
-    --secondary-foreground: 0 0% 9.0196%;
-    --muted: 0 0% 96.0784%;
-    --muted-foreground: 0 0% 44.3137%;
-    --accent: 0 0% 96.0784%;
-    --accent-foreground: 0 0% 9.0196%;
-    --destructive: 357.1429 100% 45.2941%;
-    --destructive-foreground: 0 0% 96.0784%;
-    --border: 0 0% 89.8039%;
-    --input: 0 0% 89.8039%;
-    --ring: 0 0% 63.1373%;
-    --chart-1: 0 0% 45.098%;
-    --chart-2: 0 0% 45.098%;
-    --chart-3: 0 0% 45.098%;
-    --chart-4: 0 0% 45.098%;
-    --chart-5: 0 0% 45.098%;
-    --sidebar: 0 0% 98.0392%;
-    --sidebar-foreground: 0 0% 3.9216%;
-    --sidebar-primary: 0 0% 9.0196%;
-    --sidebar-primary-foreground: 0 0% 98.0392%;
-    --sidebar-accent: 0 0% 96.0784%;
-    --sidebar-accent-foreground: 0 0% 9.0196%;
-    --sidebar-border: 0 0% 89.8039%;
-    --sidebar-ring: 0 0% 63.1373%;
-    --font-sans: Geist Mono, monospace;
-    --font-serif: Geist Mono, monospace;
-    --font-mono: Geist Mono, monospace;
-    --radius: 0rem;
-    --shadow-x: 0px;
-    --shadow-y: 1px;
-    --shadow-blur: 0px;
-    --shadow-spread: 0px;
-    --shadow-opacity: 0;
-    --shadow-color: hsl(0 0% 0%);
-    --shadow-2xs: 0px 1px 0px 0px hsl(0 0% 0% / 0);
-    --shadow-xs: 0px 1px 0px 0px hsl(0 0% 0% / 0);
-    --shadow-sm:
-      0px 1px 0px 0px hsl(0 0% 0% / 0), 0px 1px 2px -1px hsl(0 0% 0% / 0);
-    --shadow:
-      0px 1px 0px 0px hsl(0 0% 0% / 0), 0px 1px 2px -1px hsl(0 0% 0% / 0);
-    --shadow-md:
-      0px 1px 0px 0px hsl(0 0% 0% / 0), 0px 2px 4px -1px hsl(0 0% 0% / 0);
-    --shadow-lg:
-      0px 1px 0px 0px hsl(0 0% 0% / 0), 0px 4px 6px -1px hsl(0 0% 0% / 0);
-    --shadow-xl:
-      0px 1px 0px 0px hsl(0 0% 0% / 0), 0px 8px 10px -1px hsl(0 0% 0% / 0);
-    --shadow-2xl: 0px 1px 0px 0px hsl(0 0% 0% / 0);
-    --tracking-normal: 0em;
-    --spacing: 0.25rem;
+    color-scheme: light;
+
+    --background: 36 30% 96%;
+    --foreground: 268 22% 12%;
+    --card: 40 40% 99%;
+    --card-foreground: 268 22% 12%;
+    --muted: 36 22% 92%;
+    --muted-foreground: 268 8% 40%;
+    --primary: 268 44% 46%;
+    --primary-foreground: 40 40% 99%;
+    --secondary: 36 22% 91%;
+    --secondary-foreground: 268 22% 14%;
+    --accent: 36 22% 86%;
+    --accent-foreground: 268 22% 14%;
+    --destructive: 354 62% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 36 16% 84%;
+    --input: 268 8% 50%;
+    --ring: 268 44% 46%;
+    --wave: 268 10% 58%;
+    --radius: 0.75rem;
   }
 
+  /* Dark: deep plum and lilac. */
   .dark {
-    --background: 0 0% 3.9216%;
-    --foreground: 0 0% 98.0392%;
-    --card: 0 0% 9.8039%;
-    --card-foreground: 0 0% 98.0392%;
-    --popover: 0 0% 14.902%;
-    --popover-foreground: 0 0% 98.0392%;
-    --primary: 0 0% 45.098%;
-    --primary-foreground: 0 0% 98.0392%;
-    --secondary: 0 0% 14.902%;
-    --secondary-foreground: 0 0% 98.0392%;
-    --muted: 0 0% 14.902%;
-    --muted-foreground: 0 0% 63.1373%;
-    --accent: 0 0% 25.098%;
-    --accent-foreground: 0 0% 98.0392%;
-    --destructive: 358.8387 100% 69.6078%;
-    --destructive-foreground: 0 0% 14.902%;
-    --border: 0 0% 21.9608%;
-    --input: 0 0% 32.1569%;
-    --ring: 0 0% 45.098%;
-    --chart-1: 0 0% 45.098%;
-    --chart-2: 0 0% 45.098%;
-    --chart-3: 0 0% 45.098%;
-    --chart-4: 0 0% 45.098%;
-    --chart-5: 0 0% 45.098%;
-    --sidebar: 0 0% 9.0196%;
-    --sidebar-foreground: 0 0% 98.0392%;
-    --sidebar-primary: 0 0% 98.0392%;
-    --sidebar-primary-foreground: 0 0% 9.0196%;
-    --sidebar-accent: 0 0% 14.902%;
-    --sidebar-accent-foreground: 0 0% 98.0392%;
-    --sidebar-border: 0 0% 100%;
-    --sidebar-ring: 0 0% 32.1569%;
-    --font-sans: Geist Mono, monospace;
-    --font-serif: Geist Mono, monospace;
-    --font-mono: Geist Mono, monospace;
-    --radius: 0rem;
-    --shadow-x: 0px;
-    --shadow-y: 1px;
-    --shadow-blur: 0px;
-    --shadow-spread: 0px;
-    --shadow-opacity: 0;
-    --shadow-color: hsl(0 0% 0%);
-    --shadow-2xs: 0px 1px 0px 0px hsl(0 0% 0% / 0);
-    --shadow-xs: 0px 1px 0px 0px hsl(0 0% 0% / 0);
-    --shadow-sm:
-      0px 1px 0px 0px hsl(0 0% 0% / 0), 0px 1px 2px -1px hsl(0 0% 0% / 0);
-    --shadow:
-      0px 1px 0px 0px hsl(0 0% 0% / 0), 0px 1px 2px -1px hsl(0 0% 0% / 0);
-    --shadow-md:
-      0px 1px 0px 0px hsl(0 0% 0% / 0), 0px 2px 4px -1px hsl(0 0% 0% / 0);
-    --shadow-lg:
-      0px 1px 0px 0px hsl(0 0% 0% / 0), 0px 4px 6px -1px hsl(0 0% 0% / 0);
-    --shadow-xl:
-      0px 1px 0px 0px hsl(0 0% 0% / 0), 0px 8px 10px -1px hsl(0 0% 0% / 0);
-    --shadow-2xl: 0px 1px 0px 0px hsl(0 0% 0% / 0);
-  }
-}
+    color-scheme: dark;
 
-@layer base {
+    --background: 264 14% 6%;
+    --foreground: 264 22% 95%;
+    --card: 262 12% 10%;
+    --card-foreground: 264 22% 95%;
+    --muted: 262 12% 10%;
+    --muted-foreground: 258 12% 68%;
+    --primary: 264 92% 78%;
+    --primary-foreground: 264 45% 8%;
+    --secondary: 260 11% 15%;
+    --secondary-foreground: 264 22% 95%;
+    --accent: 260 11% 20%;
+    --accent-foreground: 264 22% 95%;
+    --destructive: 354 90% 76%;
+    --destructive-foreground: 264 45% 8%;
+    --border: 258 10% 24%;
+    --input: 258 10% 46%;
+    --ring: 264 92% 78%;
+    --wave: 258 10% 43%;
+  }
+
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background font-sans text-foreground antialiased;
+    /* A faint lilac wash from the top gives the flat surface depth; no texture. */
+    background-image: radial-gradient(
+      120% 70% at 50% -20%,
+      hsl(var(--primary) / 0.1),
+      transparent 60%
+    );
+    background-attachment: fixed;
+    overscroll-behavior: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

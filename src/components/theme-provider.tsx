@@ -1,8 +1,19 @@
 "use client";
 
 import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { type ThemeProviderProps } from "next-themes";
 
-export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
-}
+/** Follows the device scheme until the user picks one; the pick persists in localStorage. */
+const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => (
+  <NextThemesProvider
+    attribute="class"
+    defaultTheme="system"
+    enableSystem
+    disableTransitionOnChange
+  >
+    {children}
+  </NextThemesProvider>
+);
+
+export default ThemeProvider;

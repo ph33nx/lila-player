@@ -1,22 +1,15 @@
 # Dependency Maintenance
 
-Periodic dependency + security upkeep for Lila Player. Run every 4-8 weeks, or whenever Dependabot opens alerts. Written for an agent picking this up cold.
+Periodic dependency + security upkeep for Lila Player. Run every 4-8 weeks, or whenever Dependabot opens alerts.
 
 **Two package managers, kept in lockstep:**
 
-| Ecosystem | Manifest | Lockfile | Refresh tool | Advisory tool |
-|---|---|---|---|---|
-| npm (frontend) | `package.json` | `package-lock.json` | `npm-check-updates` (`ncu`) | `npm audit` |
-| Cargo (Tauri backend) | `src-tauri/Cargo.toml` | `src-tauri/Cargo.lock` | `cargo update` | `cargo audit` |
+| Ecosystem             | Manifest               | Lockfile               | Refresh tool                | Advisory tool |
+| --------------------- | ---------------------- | ---------------------- | --------------------------- | ------------- |
+| npm (frontend)        | `package.json`         | `package-lock.json`    | `npm-check-updates` (`ncu`) | `npm audit`   |
+| Cargo (Tauri backend) | `src-tauri/Cargo.toml` | `src-tauri/Cargo.lock` | `cargo update`              | `cargo audit` |
 
-**Done means all of these are green (the gate, never skip):**
-
-```bash
-npm run typecheck && npm run lint && npm run build     # npm side
-(cd src-tauri && cargo build)                          # Rust side
-```
-
-Plus the lefthook hooks must keep passing: `pre-commit` runs `format` + `lint --fix`, `pre-push` runs `typecheck` (`lefthook.yml`). If the gate above passes, the hooks pass.
+**Done means the gate is green, never skip it:** `npm run verify` (npm side) and `(cd src-tauri && cargo build)` (Rust side). The lefthook hooks are a subset of it.
 
 ---
 
@@ -24,14 +17,14 @@ Plus the lefthook hooks must keep passing: `pre-commit` runs `format` + `lint --
 
 Bumping any of these is a deliberate, separate migration, not part of a routine pass. Keep them on the latest **minor/patch within the current major**.
 
-| Package | Pin to | Why held |
-|---|---|---|
-| `typescript` | 5.x | 6/7 are the native-compiler majors; migrate on purpose, not in a sweep |
-| `tailwindcss` | 3.x | v4 is a CSS-first rewrite (`@import "tailwindcss"`, `@theme`, `@tailwindcss/postcss`, HSL format changes). Big surface for a small app. |
-| `tailwind-merge` | 2.x | v3 **drops Tailwind v3 support**. Tied to `tailwindcss` — move both together or neither. |
-| `next` | 15.x | v16 removes `next lint` (already warns), changes Turbopack defaults. Do the codemod migration deliberately. |
-| `eslint` | 9.x | ESLint 10 tooling tracks Next 16. Keep with Next. |
-| `eslint-config-next` | = `next` version | Always matches the Next version exactly (`15.5.x`). |
+| Package              | Pin to           | Why held                                                                                                                                |
+| -------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `typescript`         | 5.x              | 6/7 are the native-compiler majors; migrate on purpose, not in a sweep                                                                  |
+| `tailwindcss`        | 3.x              | v4 is a CSS-first rewrite (`@import "tailwindcss"`, `@theme`, `@tailwindcss/postcss`, HSL format changes). Big surface for a small app. |
+| `tailwind-merge`     | 2.x              | v3 **drops Tailwind v3 support**. Tied to `tailwindcss` — move both together or neither.                                                |
+| `next`               | 15.x             | v16 removes `next lint` (already warns), changes Turbopack defaults. Do the codemod migration deliberately.                             |
+| `eslint`             | 9.x              | ESLint 10 tooling tracks Next 16. Keep with Next.                                                                                       |
+| `eslint-config-next` | = `next` version | Always matches the Next version exactly (`15.5.x`).                                                                                     |
 
 Everything not on this list: upgrade to latest, gate on the verify steps, hold only if it actually breaks the build.
 
@@ -65,7 +58,7 @@ npm audit fix                                            # 6. transitive dev-cha
 Verify gate:
 
 ```bash
-npm run typecheck && npm run lint && npm run build
+npm run verify
 ```
 
 ### TRAP: postcss nested under Next
@@ -137,26 +130,15 @@ cargo build                           # compiles + links the app_lib; needs the 
 - **A failed Dependabot run leaves NO PR and NO alert change**, so `gh pr list` looks clean while alerts stay open. Always cross-check `gh api repos/ph33nx/lila-player/dependabot/alerts` and `gh run list` before concluding there is nothing to do. Both `sharp` and `glib` are in this state: no reachable auto-fix, so every run fails silently.
 - `.github/workflows/dependabot-auto-merge.yml` auto-merges **patch + minor** Dependabot PRs after CI passes.
 - **An auto-merged PR does not trigger `publish.yml`.** Merges made with `GITHUB_TOKEN` cannot start another workflow, so no release is cut and `eslint-config-next` silently drifts off the `next` version it must match. Re-align it on the next manual pass.
-- There is **no `.github/dependabot.yml`**, so only *security* updates get PRs, not routine version updates. Adding one (ecosystems `npm` + `cargo` + `github-actions`, weekly) would automate most of a routine pass and pair with the existing auto-merge. Consider it.
+- There is **no `.github/dependabot.yml`**, so only _security_ updates get PRs, not routine version updates. Adding one (ecosystems `npm` + `cargo` + `github-actions`, weekly) would automate most of a routine pass and pair with the existing auto-merge. Consider it.
 - Dependabot PRs that this maintenance run already fixes on `main` auto-close as resolved. No need to merge them by hand.
 
 ---
 
-## Baseline: last run 2026-07-28
+## Baseline
 
-Security-only pass. Routine drift was cleared 2026-07-21 and was not re-swept.
+**Held on their current major on purpose:** typescript 5.x · tailwindcss 3.x · tailwind-merge 2.x · next 15.5.x · eslint 9.x · eslint-config-next = next.
 
-**Resolved:**
-- `sharp` 0.34.5 -> **0.35.3** via override (GHSA-f88m-g3jw-g9cj, libvips CVE-2026-33327/33328/35590/35591, high). Closes the only actionable open alert. See the sharp trap above.
-- `brace-expansion` 5.0.7 -> 5.0.8 under `@typescript-eslint/typescript-estree` (in range, free).
-- `eslint-config-next` 15.5.20 -> **15.5.21**, re-aligned to `next` after the auto-merged Dependabot PR moved only one side of the pair.
+**Residual, upstream-gated, do not chase:** `glib` 0.18.5 RUSTSEC unsoundness warning, capped by Tauri 2.x on gtk-rs 0.18 (re-proved: `cargo update -p glib --precise 0.20.0` fails at `gtk v0.18.2 <- tauri`); recheck when Tauri releases on gtk-rs 0.20.
 
-**Residual (expected, upstream-gated, do not chase):**
-- `glib` 0.18.5 — RUSTSEC unsoundness warning, capped by Tauri 2.x gtk-rs 0.18. Re-proved 2026-07-28: `cargo update -p glib --precise 0.20.0` fails at `gtk v0.18.2 <- tauri v2.11.5`. Recheck when Tauri releases on gtk-rs 0.20.
-- `brace-expansion` 1.x — 9 high in `npm audit`, all one advisory through eslint 9's internals, no fix published on the 1.x line. See the eslint trap above. Clears with eslint 10, which is held behind Next 16.
-
-**Key resolved versions (held on their current major on purpose):**
-- typescript 5.9.3 · tailwindcss 3.4.19 · tailwind-merge 2.6.1 · next 15.5.21 · eslint 9.39.5 · eslint-config-next 15.5.21
-- Freely upgraded: react/react-dom 19.2.7 · next-themes 0.4.6 · framer-motion 12.42.2 · lucide-react 1.25.0 · @radix-ui/\* latest · @tauri-apps/\* 2.11.x · postcss 8.5.20
-
-Gates green: typecheck, lint, `next build`, `cargo audit` (0 vulnerabilities, 17 allowed warnings). `cargo build` not re-run: no Rust manifest or lockfile change in this pass.
+**Last pass (v1.0.0):** react/react-dom 19.2.8 · motion 13.2 (replaces the legacy `framer-motion` package; imports are `motion/react`) · lucide-react 1.42 · @radix-ui/react-slider latest · @tauri-apps/cli 2.11.x · postcss 8.5.28 · lefthook 2.1.12 · npm-check-updates 23 · next-themes 0.4.6. Test toolchain: vitest 5.0.0 · vite 8 · @vitejs/plugin-react 6 · jsdom 30 · @testing-library/react 16 · @playwright/test 1.63.0 · @axe-core/playwright 4.13 · serve. Removed as unused: `@tauri-apps/api`, `@tauri-apps/plugin-dialog`, `@tauri-apps/plugin-fs`, `@radix-ui/react-dialog`, `@radix-ui/react-label`, `@radix-ui/react-slot`, `tailwindcss-animate`, `vite-tsconfig-paths`; Cargo: `tauri-plugin-fs`, `tauri-plugin-dialog`. `npm audit` 0 (the brace-expansion chain cleared), `cargo update` refreshed 89 crates in range, `cargo audit` 0 vulnerabilities.

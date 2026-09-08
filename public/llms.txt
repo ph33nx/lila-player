@@ -1,0 +1,19 @@
+# Lila Player
+
+> Lila Player is a free, open-source desktop app for Windows, macOS and Linux that turns any audio file into a slowed and reverb lofi version, offline, with a WAV export.
+
+Lila Player ships as a desktop app for Windows x86_64 (`.exe`, `.msi`), macOS on Intel and Apple Silicon (`.dmg`) and Linux x86_64 (`.deb`, `.rpm`, `.AppImage`), and as a browser app at https://ph33nx.github.io/lila-player/. It is built with Tauri 2 and Next.js 15, and all audio work runs through the Web Audio API on the user's own machine: nothing is uploaded and no account is needed.
+
+The controls are speed and pitch from 0.65x to 1.35x with pitch following speed, reverb from 0 to 100 as a dry to wet crossfade, vinyl crackle from 0 to 100, volume from 0 to 110 %, a Tone group (bass, warmth, drive and wobble, 0 to 100 each), a whole-track loop toggle with optional A to B loop points, and click-to-seek on the waveform. It opens any audio file the system webview can decode, which normally covers MP3, WAV, M4A and AAC, and formats such as FLAC and OGG depending on the platform. The export renders the current speed, reverb, tone and volume settings offline to an uncompressed WAV; vinyl crackle is a playback layer and is not included in the export. There is no pitch-preserving time stretch. The project is MIT licensed and free to use. Released binaries are unsigned, so macOS and Windows warn on first run.
+
+## Docs
+
+- [README](https://raw.githubusercontent.com/ph33nx/lila-player/main/README.md): what the app does, the exact control ranges, how to make a slowed and reverb track, the FAQ, and installation help for unsigned binaries
+- [Contributor docs](https://raw.githubusercontent.com/ph33nx/lila-player/main/docs/index.md): entry point for building, releasing and the project's design decisions
+- [Releases](https://github.com/ph33nx/lila-player/releases): downloads for every platform, with version numbers and changelogs
+- [Web app](https://ph33nx.github.io/lila-player/): the same player running in a browser, processing audio locally
+
+## Optional
+
+- [Repository](https://github.com/ph33nx/lila-player): source code and issue tracker
+- [License](https://raw.githubusercontent.com/ph33nx/lila-player/main/LICENSE): the MIT license text

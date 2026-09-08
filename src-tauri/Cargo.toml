@@ -1,6 +1,6 @@
 [package]
 name = "Lila"
-version = "0.1.0"
+version = "1.0.0"
 description = "Lila Player - Slowed and Reverb LoFi Player"
 authors = ["ph33nx"]
 license = ""
@@ -23,5 +23,3 @@ serde = { version = "1", features = ["derive"] }
 log = "0.4"
 tauri = { version = "2", features = [] }
 tauri-plugin-log = "2"
-tauri-plugin-fs = "2"
-tauri-plugin-dialog = "2"

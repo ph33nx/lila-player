@@ -46,6 +46,7 @@ jobs:
         run: npx next build
         env:
           PAGES_BASE_PATH: ${{ steps.setup_pages.outputs.base_path }}
+          NEXT_PUBLIC_TARGET: web
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Lila Player",
-  "version": "0.2.8",
+  "version": "../package.json",
   "identifier": "com.lila-player.dev",
   "build": {
     "frontendDist": "../out",
@@ -15,11 +15,16 @@
         "title": "Lila Player",
         "width": 800,
         "height": 600,
-        "resizable": false,
+        "resizable": true,
+        "minWidth": 720,
+        "minHeight": 480,
+        "dragDropEnabled": false,
         "fullscreen": false,
         "center": true,
         "decorations": true,
-        "backgroundColor": "#000000"
+        "backgroundColor": "#0F0D11",
+        "titleBarStyle": "Transparent",
+        "hiddenTitle": true
       }
     ],
     "security": {

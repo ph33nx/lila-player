@@ -1,18 +1,100 @@
-import { ThemeProvider } from "@/components/theme-provider";
-import { Space_Mono, Rubik_Mono_One } from "next/font/google";
+import type { Metadata } from "next";
+import MotionProvider from "@/components/motion-provider";
+import ThemeProvider from "@/components/theme-provider";
+import pkg from "../../package.json";
 import "./globals.css";
 
-const rubikMonoOne = Rubik_Mono_One({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-rubik-mono",
-});
+const SITE_URL = "https://ph33nx.github.io/lila-player/";
+const DESCRIPTION =
+  "Lila Player is a free, open source desktop app for Windows, macOS and Linux that turns any audio file into a slowed and reverb lofi version, offline.";
 
-const spaceMono = Space_Mono({
-  weight: ["400", "700"],
-  subsets: ["latin"],
-  variable: "--font-space-mono",
-});
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default:
+      "Lila Player: slowed and reverb lofi player for Windows, macOS and Linux",
+    template: "%s | Lila Player",
+  },
+  description: DESCRIPTION,
+  applicationName: "Lila Player",
+  keywords: [
+    "slowed and reverb",
+    "slowed + reverb",
+    "lofi player",
+    "lo-fi",
+    "nightcore",
+    "vaporwave",
+    "daycore",
+    "chopped and screwed",
+    "vinyl crackle",
+    "WAV export",
+    "offline audio editor",
+    "open source",
+    "desktop app",
+    "Windows",
+    "macOS",
+    "Linux",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "Lila Player",
+    title:
+      "Lila Player: slowed and reverb lofi player for Windows, macOS and Linux",
+    description: DESCRIPTION,
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Lila Player, an open source slowed and reverb lofi audio player, showing a loaded track with its waveform and the speed, reverb, vinyl crackle and volume sliders",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title:
+      "Lila Player: slowed and reverb lofi player for Windows, macOS and Linux",
+    description: DESCRIPTION,
+    images: ["/og.png"],
+  },
+  icons: {
+    icon: [
+      { url: "favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "favicon.ico", sizes: "any" },
+    ],
+    apple: [{ url: "apple-touch-icon.png", sizes: "180x180" }],
+  },
+  manifest: "site.webmanifest",
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+const softwareJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Lila Player",
+  description: DESCRIPTION,
+  applicationCategory: "MultimediaApplication",
+  operatingSystem: "Windows, macOS, Linux",
+  softwareVersion: pkg.version,
+  url: SITE_URL,
+  image: `${SITE_URL}og.png`,
+  downloadUrl: "https://github.com/ph33nx/lila-player/releases",
+  license: "https://opensource.org/license/mit",
+  isAccessibleForFree: true,
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+};
 
 export default function RootLayout({
   children,
@@ -20,17 +102,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={`${rubikMonoOne.variable} ${spaceMono.variable}`}
-    >
-      <head />
-      <body className="bg-background font-sans">
-        <div className="fixed inset-0 bg-[radial-gradient(#ffffff33_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none opacity-10" />
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(softwareJsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
         <main>
-          <ThemeProvider attribute="class" defaultTheme="dark">
-            {children}
+          <ThemeProvider>
+            <MotionProvider>{children}</MotionProvider>
           </ThemeProvider>
         </main>
       </body>

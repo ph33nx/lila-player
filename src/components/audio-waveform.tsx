@@ -1,336 +1,313 @@
 "use client";
 
-import { useEffect, useRef, memo, useCallback } from "react";
-import { motion } from "framer-motion";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "./ui/button";
-import { FolderOpen } from "lucide-react";
+import type { LoopRegion, Subscribe, TrackInfo } from "@/engine";
+import { AUDIO_FORMATS } from "@/utils/audio-file";
+import { readCssToken } from "@/utils/css-token";
+import { formatTime } from "@/utils/time";
 
-// Custom hook for handling canvas operations
-const useWaveformCanvas = (
-  buffer: AudioBuffer | null,
-  progress: number,
-  onProgressClick: (progress: number) => void,
-  onProgressUpdate: (callback: (progress: number) => void) => () => void,
-) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const rafRef = useRef<number | null>(null);
+/** Column pitch and bar width in CSS pixels; the bitmap is scaled by devicePixelRatio. */
+const PITCH = 3;
+const BAR = 2;
+const MIN_BAR = 2;
 
-  // Initialize offscreen canvas for double buffering
-  useEffect(() => {
-    offscreenCanvasRef.current = document.createElement("canvas");
-    return () => {
-      offscreenCanvasRef.current = null;
-    };
-  }, []);
+const MARKER =
+  "pointer-events-none absolute top-0 rounded-sm bg-primary px-1 font-mono text-[10px] font-semibold leading-4 text-primary-foreground";
 
-  // Optimize waveform calculation with Web Audio API
-  const calculateWaveformData = useCallback(
-    (channelData: Float32Array, width: number) => {
-      const blockSize = Math.floor(channelData.length / width);
-      const waveformData = new Float32Array(width * 2);
+interface Palette {
+  idle: string;
+  played: string;
+  band: string;
+  glow: string;
+}
 
-      // First pass: calculate min/max for each block and find peak
-      let peakValue = 0;
-      for (let i = 0; i < width; i++) {
-        let min = 1.0;
-        let max = -1.0;
-        const startIndex = i * blockSize;
-
-        for (
-          let j = 0;
-          j < blockSize && startIndex + j < channelData.length;
-          j++
-        ) {
-          const datum = channelData[startIndex + j];
-          if (datum < min) min = datum;
-          if (datum > max) max = datum;
-        }
-
-        waveformData[i * 2] = max;
-        waveformData[i * 2 + 1] = min;
-        peakValue = Math.max(peakValue, Math.abs(max), Math.abs(min));
-      }
-
-      // Normalize to use full height (with small margin)
-      const normalizeScale = peakValue > 0 ? 0.95 / peakValue : 1;
-      for (let i = 0; i < waveformData.length; i++) {
-        waveformData[i] *= normalizeScale;
-      }
-
-      return waveformData;
-    },
-    [],
-  );
-
-  // Store waveform data to avoid recalculation
-  const waveformDataRef = useRef<Float32Array | null>(null);
-  const baseImageRef = useRef<ImageData | null>(null);
-
-  // Initial waveform calculation and drawing
-  const initializeWaveform = useCallback(() => {
-    const canvas = canvasRef.current;
-    const offscreenCanvas = offscreenCanvasRef.current;
-    if (!canvas || !offscreenCanvas || !buffer) return;
-
-    const ctx = canvas.getContext("2d", { alpha: false });
-    const offscreenCtx = offscreenCanvas.getContext("2d", { alpha: false });
-    if (!ctx || !offscreenCtx) return;
-
-    // Calculate waveform data only once
-    if (!waveformDataRef.current) {
-      const channelData = buffer.getChannelData(0);
-      waveformDataRef.current = calculateWaveformData(
-        channelData,
-        canvas.width,
-      );
-    }
-
-    // Draw base waveform only once
-    if (!baseImageRef.current) {
-      offscreenCanvas.width = canvas.width;
-      offscreenCanvas.height = canvas.height;
-
-      // Clear with transparent background
-      offscreenCtx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const amp = canvas.height / 2;
-      offscreenCtx.beginPath();
-      offscreenCtx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-      offscreenCtx.lineWidth = 1;
-
-      for (let i = 0; i < canvas.width; i++) {
-        const max = waveformDataRef.current[i * 2] * amp + amp;
-        const min = waveformDataRef.current[i * 2 + 1] * amp + amp;
-        offscreenCtx.moveTo(i, max);
-        offscreenCtx.lineTo(i, min);
-      }
-      offscreenCtx.stroke();
-
-      baseImageRef.current = offscreenCtx.getImageData(
-        0,
-        0,
-        canvas.width,
-        canvas.height,
-      );
-    }
-
-    // Draw base image
-    ctx.putImageData(baseImageRef.current, 0, 0);
-  }, [buffer, calculateWaveformData]);
-
-  // Optimized drawing function using double buffering
-  const drawWaveform = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !buffer) return;
-
-    const ctx = canvas.getContext("2d", { alpha: true });
-    if (!ctx || !baseImageRef.current) return;
-
-    // Clear canvas for transparent background
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Draw base waveform
-    ctx.putImageData(baseImageRef.current, 0, 0);
-
-    // Draw progress overlay
-    const progressWidth = canvas.width * progress;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.fillRect(0, 0, progressWidth, canvas.height);
-
-    // Draw progress line
-    ctx.beginPath();
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2;
-    ctx.moveTo(progressWidth, 0);
-    ctx.lineTo(progressWidth, canvas.height);
-    ctx.stroke();
-  }, [buffer, progress]);
-
-  // Handle canvas interactions
-  const handleCanvasInteraction = useCallback(
-    (e: React.MouseEvent<HTMLCanvasElement>) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const x = (e.clientX - rect.left) * scaleX;
-      const clickedProgress = Math.max(0, Math.min(1, x / canvas.width));
-      onProgressClick(clickedProgress);
-    },
-    [onProgressClick],
-  );
-
-  // Initialize waveform when buffer changes
-  useEffect(() => {
-    if (!buffer) {
-      // Clear cached waveform and base image when no buffer is provided
-      waveformDataRef.current = null;
-      baseImageRef.current = null;
-      return;
-    }
-
-    // Clear cached data and initialize waveform for the new buffer
-    waveformDataRef.current = null;
-    baseImageRef.current = null;
-    initializeWaveform();
-  }, [buffer, initializeWaveform]);
-
-  // Handle progress updates
-  useEffect(() => {
-    if (!buffer) return;
-
-    const handleProgress = () => {
-      drawWaveform();
-      rafRef.current = requestAnimationFrame(handleProgress);
-    };
-
-    // Start animation loop
-    rafRef.current = requestAnimationFrame(handleProgress);
-
-    // Subscribe to progress updates for sync
-    const unsubscribe = onProgressUpdate(() => {
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(handleProgress);
-      }
-    });
-
-    return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-      unsubscribe();
-    };
-  }, [buffer, drawWaveform, onProgressUpdate]);
-
+/** One source of truth for colour: the same tokens the DOM uses. */
+const readPalette = (): Palette => {
+  const wave = readCssToken("--wave", "258 10% 43%");
+  const primary = readCssToken("--primary", "264 92% 78%");
   return {
-    canvasRef,
-    handleCanvasInteraction,
+    idle: `hsl(${wave})`,
+    played: `hsl(${primary})`,
+    band: `hsl(${primary} / 0.1)`,
+    glow: `hsl(${primary} / 0.25)`,
   };
 };
 
-// Custom hook for file handling
-const useFileHandler = (onFileChange: (file: File) => void) => {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const handleFileUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files?.[0]) {
-        onFileChange(e.target.files[0]);
-      }
-    },
-    [onFileChange],
-  );
-
-  const openFilePicker = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  return {
-    fileInputRef,
-    handleFileUpload,
-    openFilePicker,
-  };
-};
-
-// Memoized time formatter
-const formatTime = (seconds: number): string => {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-};
+const ratioAt = (clientX: number, rect: DOMRect): number =>
+  Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
 
 interface AudioWaveformProps {
-  buffer: AudioBuffer | null;
-  progress: number;
-  onProgressClick: (progress: number) => void;
-  onProgressUpdate: (callback: (progress: number) => void) => () => void;
-  isLoading?: boolean;
-  onFileChange: (file: File) => void;
-  filename: string | null;
+  track: TrackInfo | null;
+  loopRegion: LoopRegion;
+  isLoading: boolean;
+  isPlaying: boolean;
+  onOpen: () => void;
+  onSeek: (seconds: number) => void;
+  /** The hook has no split play/pause; toggling is exact because scrubbing only
+   *  ever pauses a playing track and resumes the one it paused. */
+  onTogglePlay: () => void;
+  getPeaks: (columns: number) => Promise<Float32Array>;
+  subscribe: Subscribe;
+  getPosition: () => number;
 }
 
-function AudioWaveform({
-  buffer,
-  progress,
-  onProgressClick,
-  onProgressUpdate,
-  isLoading = false,
-  onFileChange,
-  filename,
-}: AudioWaveformProps) {
-  const { canvasRef, handleCanvasInteraction } = useWaveformCanvas(
-    buffer,
-    progress,
-    onProgressClick,
-    onProgressUpdate,
-  );
+const AudioWaveform: React.FC<AudioWaveformProps> = memo(
+  ({
+    track,
+    loopRegion,
+    isLoading,
+    isPlaying,
+    onOpen,
+    onSeek,
+    onTogglePlay,
+    getPeaks,
+    subscribe,
+    getPosition,
+  }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const positionRef = useRef(0);
+    const paletteRef = useRef<Palette | null>(null);
+    const scrubRef = useRef<{ resume: boolean } | null>(null);
 
-  const { fileInputRef, handleFileUpload, openFilePicker } =
-    useFileHandler(onFileChange);
+    const [size, setSize] = useState({ width: 0, height: 0 });
+    const [peaks, setPeaks] = useState<Float32Array | null>(null);
+    const [hover, setHover] = useState<{ x: number; time: number } | null>(
+      null,
+    );
 
-  const currentTime = buffer ? formatTime(progress * buffer.duration) : "0:00";
-  const duration = buffer ? formatTime(buffer.duration) : "0:00";
+    const duration = track?.duration ?? 0;
+    const columns = Math.max(1, Math.floor(size.width / PITCH));
 
-  return (
-    <motion.div
-      className="relative w-full h-32 mb-4"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded z-10">
-          <div className="w-8 h-8 border-4 border-t-white rounded-full animate-spin"></div>
-        </div>
-      )}
+    // Bitmap follows the element and the display, so bars stay crisp at any dpr.
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const observer = new ResizeObserver(([entry]) => {
+        const { width, height } = entry.contentRect;
+        setSize((previous) =>
+          previous.width === width && previous.height === height
+            ? previous
+            : { width, height },
+        );
+      });
+      observer.observe(canvas);
+      return () => observer.disconnect();
+    }, [track]);
 
-      {!buffer && !isLoading && (
-        <div className="flex items-center justify-center w-full h-full">
-          <Button onClick={openFilePicker}>Select Audio</Button>
-        </div>
-      )}
+    useEffect(() => {
+      if (!track || size.width === 0) {
+        setPeaks(null);
+        return;
+      }
+      let live = true;
+      void getPeaks(columns).then((data) => {
+        if (live) setPeaks(data);
+      });
+      return () => {
+        live = false;
+      };
+    }, [getPeaks, track, columns, size.width]);
 
-      {buffer && (
-        <>
-          <div className="absolute top-2 left-2 text-sm text-white/80">
-            {filename}
+    const draw = useCallback(() => {
+      const canvas = canvasRef.current;
+      const context = canvas?.getContext("2d");
+      if (!canvas || !context) return;
+
+      const { width, height } = size;
+      if (width === 0 || height === 0) return;
+
+      const dpr = window.devicePixelRatio || 1;
+      const bitmapWidth = Math.round(width * dpr);
+      const bitmapHeight = Math.round(height * dpr);
+      if (canvas.width !== bitmapWidth) canvas.width = bitmapWidth;
+      if (canvas.height !== bitmapHeight) canvas.height = bitmapHeight;
+
+      paletteRef.current ??= readPalette();
+      const palette = paletteRef.current;
+
+      // Draw in CSS pixels; the transform maps them onto device pixels.
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      context.clearRect(0, 0, width, height);
+
+      const middle = height / 2;
+      const played =
+        duration > 0 ? (positionRef.current / duration) * width : 0;
+
+      if (loopRegion.custom && duration > 0) {
+        const from = (loopRegion.start / duration) * width;
+        const to = (loopRegion.end / duration) * width;
+        context.fillStyle = palette.band;
+        context.fillRect(from, 0, to - from, height);
+      }
+
+      if (peaks && peaks.length > 0) {
+        const count = Math.min(columns, peaks.length / 2);
+        for (let i = 0; i < count; i++) {
+          const x = i * PITCH;
+          if (x > width) break;
+          const top = middle - Math.max(0, peaks[i * 2]) * middle;
+          const bottom = middle - Math.min(0, peaks[i * 2 + 1]) * middle;
+          const barHeight = Math.max(bottom - top, MIN_BAR);
+          context.fillStyle = x + BAR <= played ? palette.played : palette.idle;
+          context.fillRect(
+            x,
+            Math.min(top, middle - MIN_BAR / 2),
+            BAR,
+            barHeight,
+          );
+        }
+      }
+
+      if (duration > 0) {
+        context.fillStyle = palette.glow;
+        context.fillRect(played - 3, 0, 6, height);
+        context.fillStyle = palette.played;
+        context.fillRect(played - 1, 0, 2, height);
+      }
+    }, [size, duration, loopRegion, peaks, columns]);
+
+    useEffect(() => {
+      positionRef.current = getPosition();
+      draw();
+    }, [draw, getPosition]);
+
+    // The tokens change with the theme class on <html>; drop the cached palette.
+    useEffect(() => {
+      const observer = new MutationObserver(() => {
+        paletteRef.current = null;
+        draw();
+      });
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+      return () => observer.disconnect();
+    }, [draw]);
+
+    useEffect(
+      () =>
+        subscribe((event) => {
+          if (event.type !== "tick") return;
+          positionRef.current = event.position;
+          draw();
+        }),
+      [subscribe, draw],
+    );
+
+    const seekToPointer = useCallback(
+      (event: React.PointerEvent<HTMLCanvasElement>) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        onSeek(ratioAt(event.clientX, rect) * duration);
+      },
+      [duration, onSeek],
+    );
+
+    const onPointerDown = useCallback(
+      (event: React.PointerEvent<HTMLCanvasElement>) => {
+        if (duration <= 0 || event.button !== 0) return;
+        event.currentTarget.setPointerCapture(event.pointerId);
+        scrubRef.current = { resume: isPlaying };
+        if (isPlaying) onTogglePlay();
+        seekToPointer(event);
+      },
+      [duration, isPlaying, onTogglePlay, seekToPointer],
+    );
+
+    const onPointerMove = useCallback(
+      (event: React.PointerEvent<HTMLCanvasElement>) => {
+        if (duration <= 0) return;
+        const rect = event.currentTarget.getBoundingClientRect();
+        const ratio = ratioAt(event.clientX, rect);
+        setHover({ x: ratio * rect.width, time: ratio * duration });
+        if (scrubRef.current) onSeek(ratio * duration);
+      },
+      [duration, onSeek],
+    );
+
+    const clearHover = useCallback(() => setHover(null), []);
+
+    useEffect(() => {
+      scrubRef.current = null;
+      setHover(null);
+    }, [track]);
+
+    const onPointerUp = useCallback(
+      (event: React.PointerEvent<HTMLCanvasElement>) => {
+        const scrub = scrubRef.current;
+        if (!scrub) return;
+        scrubRef.current = null;
+        event.currentTarget.releasePointerCapture(event.pointerId);
+        seekToPointer(event);
+        if (scrub.resume) onTogglePlay();
+      },
+      [onTogglePlay, seekToPointer],
+    );
+
+    return (
+      <div className="relative h-[clamp(120px,26vh,320px)] w-full overflow-hidden rounded-lg border border-border bg-card">
+        {isLoading ? (
+          <div className="absolute inset-x-12 top-1/2 h-0.5 -translate-y-1/2 overflow-hidden rounded-full bg-secondary">
+            <div className="h-full w-1/5 animate-scan rounded-full bg-primary" />
           </div>
-          <button
-            className="absolute top-2 right-2 cursor-pointer"
-            onClick={openFilePicker}
-          >
-            <FolderOpen className="h-6 w-6 text-white" />
-          </button>
-        </>
-      )}
-
-      <canvas
-        ref={canvasRef}
-        width={800}
-        height={200}
-        onClick={handleCanvasInteraction}
-        className="w-full h-full bg-transparent rounded-lg cursor-pointer"
-      />
-
-      <input
-        type="file"
-        accept="audio/*"
-        ref={fileInputRef}
-        className="hidden"
-        onChange={handleFileUpload}
-      />
-
-      <div className="absolute bottom-2 left-2 text-sm text-white/80">
-        {currentTime === "0:00" ? "" : currentTime}
+        ) : track ? (
+          <div className="absolute inset-3">
+            <canvas
+              ref={canvasRef}
+              data-testid="waveform"
+              className="block h-full w-full cursor-pointer touch-none"
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerLeave={clearHover}
+            />
+            {loopRegion.custom && duration > 0 && (
+              <>
+                <span
+                  className={MARKER}
+                  style={{ left: `${(loopRegion.start / duration) * 100}%` }}
+                >
+                  A
+                </span>
+                <span
+                  className={MARKER}
+                  style={{
+                    right: `${100 - (loopRegion.end / duration) * 100}%`,
+                  }}
+                >
+                  B
+                </span>
+              </>
+            )}
+            {hover && (
+              <span
+                className="pointer-events-none absolute bottom-0 -translate-x-1/2 rounded-sm bg-secondary px-1.5 font-mono text-[10px] leading-4 tabular-nums text-foreground"
+                style={{ left: hover.x }}
+              >
+                {formatTime(hover.time)}
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+            <Button variant="primary" onClick={onOpen}>
+              Open audio
+            </Button>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">
+                or drop a file here
+              </p>
+              <p className="text-[11px] text-muted-foreground/90">
+                {AUDIO_FORMATS}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
-      <div className="absolute bottom-2 right-2 text-sm text-white/80">
-        {duration === "0:00" ? "" : duration}
-      </div>
-    </motion.div>
-  );
-}
+    );
+  },
+);
 
-export default memo(AudioWaveform);
+AudioWaveform.displayName = "AudioWaveform";
+
+export default AudioWaveform;
