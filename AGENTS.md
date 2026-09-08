@@ -34,7 +34,7 @@ Add `(cd src-tauri && cargo build)` if anything under `src-tauri/` changed.
 
 ## Releases
 
-The version lives in `package.json`; `tauri.conf.json` reads it from there. Push to `main` (not `master`) triggers `.github/workflows/publish.yml`. Details: docs/release.md.
+The version lives in `package.json`; `tauri.conf.json` reads it from there. Pushing a `v*` tag triggers `.github/workflows/publish.yml`; pushes to `main` (not `master`) run CI and the Pages deploy. Details: docs/release.md.
 
 ## Dependencies
 

@@ -1,6 +1,6 @@
 # Release
 
-Lila ships from one static export in two ways — a Tauri desktop bundle and a GitHub Pages web app. Both are driven by pushes to `main`.
+Lila ships from one static export in two ways — a Tauri desktop bundle, cut when a `v*` tag is pushed, and a GitHub Pages web app, redeployed on every push to `main`.
 
 ## Versioning
 
@@ -8,7 +8,7 @@ The version is defined once, in `package.json`. `src-tauri/tauri.conf.json` sets
 
 ## `.github/workflows/publish.yml`
 
-Runs on every push to `main` and on `v*` tags (plus manual dispatch). Builds and publishes a GitHub release tagged `v<version>` (the `package.json` version, through `tauri.conf.json`), with bundles per platform from the workflow's build matrix: macOS Intel + Apple Silicon (`.dmg`), Ubuntu (`.AppImage`/`.deb`/`.rpm`), Windows (`.msi`/`.exe`). A push to `main` with no version bump re-publishes the release for the existing tag rather than cutting a new one.
+Runs when a `v*` tag is pushed (or on manual dispatch), never on a plain push to `main`, so a docs commit cannot rebuild a release. Builds and publishes a GitHub release tagged `v<version>` (the `package.json` version, through `tauri.conf.json`), with bundles per platform from the workflow's build matrix: macOS Intel + Apple Silicon (`.dmg`), Ubuntu (`.AppImage`/`.deb`/`.rpm`), Windows (`.msi`/`.exe`). The tag must match the version in `package.json`.
 
 Unsigned binaries: see the README's Installation FAQ — don't duplicate that note here.
 
@@ -28,7 +28,7 @@ Gate for PRs and pushes to `main`: `npm run verify` (typecheck, lint, unit tests
 
 1. `npm version <x.y.z> --no-git-tag-version`, and set the same value in `src-tauri/Cargo.toml`.
 2. Run `npm run verify` and `(cd src-tauri && cargo build)`.
-3. Push to `main` (directly, or via a PR that passes the `check` ruleset).
-4. Confirm `publish.yml` succeeded for every matrix platform: `gh run list --workflow publish.yml`.
+3. Push to `main` (directly, or via a PR that passes the `check` ruleset) and wait for CI.
+4. Tag and push the tag: `git tag v<x.y.z> && git push origin v<x.y.z>`; confirm `publish.yml` succeeded for every matrix platform: `gh run list --workflow publish.yml`.
 5. Confirm the GitHub release is tagged `v<version>` with all expected bundles attached.
 6. Confirm `deploy-pages.yml` succeeded and the Pages site serves the new build.

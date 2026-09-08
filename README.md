@@ -8,7 +8,7 @@ Lila Player is a free, open-source desktop app for Windows, macOS and Linux that
 [![Total downloads](https://img.shields.io/github/downloads/ph33nx/lila-player/total)](https://github.com/ph33nx/lila-player/releases)
 [![License](https://img.shields.io/github/license/ph33nx/lila-player)](https://github.com/ph33nx/lila-player/blob/main/LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/ph33nx/lila-player/ci.yml?branch=main&label=CI)](https://github.com/ph33nx/lila-player/actions/workflows/ci.yml)
-[![Release build](https://img.shields.io/github/actions/workflow/status/ph33nx/lila-player/publish.yml?branch=main&label=release)](https://github.com/ph33nx/lila-player/actions/workflows/publish.yml)
+[![Release build](https://img.shields.io/github/actions/workflow/status/ph33nx/lila-player/publish.yml?label=release)](https://github.com/ph33nx/lila-player/actions/workflows/publish.yml)
 [![Web app](https://img.shields.io/github/actions/workflow/status/ph33nx/lila-player/deploy-pages.yml?branch=main&label=web%20app)](https://github.com/ph33nx/lila-player/actions/workflows/deploy-pages.yml)
 ![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-blue)
 
@@ -21,14 +21,14 @@ Lila Player is a free, open-source desktop app for Windows, macOS and Linux that
 - [**Download the latest release**](https://github.com/ph33nx/lila-player/releases/latest) for Windows, macOS or Linux
 - [**Open the web app**](https://ph33nx.github.io/lila-player/) if you would rather not install anything
 
-| Platform            | Files                       | Size              |
-| ------------------- | --------------------------- | ----------------- |
-| Windows x86_64      | `.exe` installer, `.msi`    | 5 MB, 6 MB        |
-| macOS Apple Silicon | `.dmg`                      | 7 MB              |
-| macOS Intel         | `.dmg`                      | 7 MB              |
-| Linux x86_64        | `.deb`, `.rpm`, `.AppImage` | 6 MB, 6 MB, 81 MB |
+| Platform            | Files                       |
+| ------------------- | --------------------------- |
+| Windows x86_64      | `.exe` installer, `.msi`    |
+| macOS Apple Silicon | `.dmg`                      |
+| macOS Intel         | `.dmg`                      |
+| Linux x86_64        | `.deb`, `.rpm`, `.AppImage` |
 
-The AppImage is larger than the other Linux packages because it bundles its own runtime. Binaries are unsigned, so see [Installation help](#installation-help) for the first-run steps on macOS and Windows.
+The AppImage is much larger than the other Linux packages because it bundles its own runtime. Binaries are unsigned, so see [Installation help](#installation-help) for the first-run steps on macOS and Windows.
 
 ## What it does
 
