@@ -134,8 +134,8 @@ exactly one frame of half a second — no wall-clock waiting, no flake.
 `npm run screenshots` captures the UI state matrix for both engines into
 `--out <dir>` (default: a folder in the OS temp directory). It builds nothing, so
 run `npm run build` and `npx serve out -l 3123` first. Adding `-- --readme`
-regenerates `assets/screenshot-dark.png` and `-light.png` from the loop-points
-state, so the README images cannot go stale. A review tool, not a test; CI never runs it.
+regenerates `assets/screenshot-dark.png`, `-light.png` and `public/og.png` from the
+loop-points state in a viewport holding the whole page. A review tool; CI never runs it.
 
 ## CI
 

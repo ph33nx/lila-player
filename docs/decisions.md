@@ -18,7 +18,7 @@ ADR-lite. One entry per decision that shouldn't be re-litigated from scratch eac
 
 - **Decision:** Web Audio engine for now. A `TauriEngine` behind the same interface (symphonia decode, kira or fundsp graph, fft-convolver, Tauri `ipc::Channel` for position) only if triggered.
 - **Why:** building a second engine for a problem the webview doesn't have yet is waste.
-- **Revisit when:** Linux WebKitGTK audio output proves unfixable in the webview, or streaming long files becomes a requirement.
+- **Revisit when:** streaming long files becomes a requirement. Linux output is confirmed working (Ubuntu 24.04 GNOME, `.deb` build), so that trigger is retired.
 
 ### Whole-track PCM in memory
 

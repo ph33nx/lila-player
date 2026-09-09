@@ -6,7 +6,8 @@
  *   node scripts/screenshots.ts [--out <dir>] [--readme]
  *
  * It builds nothing. `--out` defaults to a folder in the OS temp directory;
- * `--readme` writes only the README images (the loop-points state, dark and light) into assets/.
+ * `--readme` writes only the README images (the loop-points state, dark and light) into
+ * assets/ and the Open Graph card into public/og.png.
  */
 import { chromium, webkit, type Browser, type Page } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -230,27 +231,30 @@ const run = async (): Promise<void> => {
 
   if (readmeOnly) {
     const browser = await chromium.launch();
+    // Tall enough to hold the page with Advanced open, so nothing scrolls: a
+    // full-page stitch would leave the fixed aura canvas behind the stitched rows.
     const context = await browser.newContext({
-      viewport: { width: 1200, height: 800 },
+      viewport: { width: 1200, height: 900 },
       deviceScaleFactor: 2,
     });
     for (const scheme of ["dark", "light"] as const) {
       const page = await context.newPage();
       await page.emulateMedia({ colorScheme: scheme });
       await walk(page, async (name) => {
-        if (name === "10-loop-points") {
+        if (name !== "10-loop-points") return;
+        await page.screenshot({ path: `assets/screenshot-${scheme}.png` });
+        if (scheme === "dark") {
           await page.screenshot({
-            path: `assets/screenshot-${scheme}.png`,
-            fullPage: true,
+            path: "public/og.png",
+            clip: { x: 0, y: 0, width: 1200, height: 630 },
+            scale: "css",
           });
         }
       });
       await page.close();
     }
     await browser.close();
-    console.log(
-      "wrote assets/screenshot-dark.png and assets/screenshot-light.png",
-    );
+    console.log("wrote assets/screenshot-{dark,light}.png and public/og.png");
     return;
   }
 

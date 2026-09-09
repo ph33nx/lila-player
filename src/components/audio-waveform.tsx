@@ -13,8 +13,9 @@ const PITCH = 3;
 const BAR = 2;
 const MIN_BAR = 2;
 
+/** A/B chips sit centred on their own boundary, so neither reads as "inside" or "outside". */
 const MARKER =
-  "pointer-events-none absolute top-0 rounded-sm bg-primary px-1 font-mono text-[10px] font-semibold leading-4 text-primary-foreground";
+  "pointer-events-none absolute top-0 -translate-x-1/2 rounded-sm bg-primary px-1 font-mono text-[10px] font-semibold leading-4 text-primary-foreground";
 
 interface Palette {
   idle: string;
@@ -266,9 +267,7 @@ const AudioWaveform: React.FC<AudioWaveformProps> = memo(
                 </span>
                 <span
                   className={MARKER}
-                  style={{
-                    right: `${100 - (loopRegion.end / duration) * 100}%`,
-                  }}
+                  style={{ left: `${(loopRegion.end / duration) * 100}%` }}
                 >
                   B
                 </span>

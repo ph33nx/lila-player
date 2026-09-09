@@ -133,9 +133,9 @@ would mean giving up instant seeking.
 ## WebKitGTK notes
 
 An `AudioContext` starts `suspended` under autoplay policy, so `resume()` is awaited
-inside the user gesture that triggered it (`load()` from picking a file, `play()` from
-the button). Whether audio actually reaches the Linux output device through WebKitGTK
-is unverified on this machine — see `docs/decisions.md`.
+inside the gesture that triggered it (`load()` from picking a file, `play()` from the
+button). Playback, export and drag-and-drop work in the `.deb` on Ubuntu 24.04 GNOME;
+a WebKitGTK drop announces files only through `DataTransfer.types`, which `useFileDrop` reads first.
 
 ## Generated sounds
 

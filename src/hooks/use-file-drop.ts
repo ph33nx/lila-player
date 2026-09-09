@@ -12,9 +12,22 @@ export interface FileDropState {
 }
 
 /**
+ * `types` lists "Files" in every engine while a drag is in flight; `items` is
+ * empty in WebKit until the drop, so it is only a second opinion.
+ */
+const carriesFiles = (event: DragEvent): boolean => {
+  const transfer = event.dataTransfer;
+  if (!transfer) return false;
+  return (
+    Array.from(transfer.types).includes("Files") ||
+    Array.from(transfer.items ?? []).some((item) => item.kind === "file")
+  );
+};
+
+/**
  * Window-wide audio drop target. Listens on `window` so the whole player is a
- * target, and counts enter/leave depth so crossing a child element does not
- * flicker the overlay.
+ * target, counts enter/leave depth so crossing a child element does not flicker
+ * the overlay, and cancels every drop so the webview can never navigate to a file.
  */
 export const useFileDrop = (onFile: (file: File) => void): FileDropState => {
   const [state, setState] = useState<FileDropState>({
@@ -30,13 +43,8 @@ export const useFileDrop = (onFile: (file: File) => void): FileDropState => {
     let depth = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
-    const carriesFile = (event: DragEvent): boolean =>
-      Array.from(event.dataTransfer?.items ?? []).some(
-        (item) => item.kind === "file",
-      );
-
     const onEnter = (event: DragEvent): void => {
-      if (!carriesFile(event)) return;
+      if (!carriesFiles(event)) return;
       event.preventDefault();
       // A rejection still counting down must not clear the overlay we just raised.
       clearTimeout(timer);
@@ -44,10 +52,13 @@ export const useFileDrop = (onFile: (file: File) => void): FileDropState => {
       setState({ isDragging: true, isRejected: false });
     };
 
+    // Cancelling dragover is what lets `drop` fire at all; an uncancelled drop
+    // makes the page navigate to the file, which is the browser default.
     const onOver = (event: DragEvent): void => {
-      if (!carriesFile(event)) return;
       event.preventDefault();
-      if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = carriesFiles(event) ? "copy" : "none";
+      }
     };
 
     const onLeave = (): void => {
@@ -56,8 +67,8 @@ export const useFileDrop = (onFile: (file: File) => void): FileDropState => {
     };
 
     const onDrop = (event: DragEvent): void => {
-      if (!carriesFile(event)) return;
       event.preventDefault();
+      if (!carriesFiles(event)) return;
       clearTimeout(timer);
       depth = 0;
       const file = Array.from(event.dataTransfer?.files ?? []).find(
