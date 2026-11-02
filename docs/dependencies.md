@@ -44,11 +44,11 @@ Do not duplicate the install commands here; the README is the single source. If 
 
 ```bash
 npx ncu                                                 # 1. see what is outdated
-npx ncu -u --target latest \
+npx ncu -u --target latest --cooldown 7 \
   --reject typescript,tailwindcss,tailwind-merge,next,eslint,eslint-config-next   # 2. bump everything NOT on the hold list
-npx ncu -u --target minor \
+npx ncu -u --target minor --cooldown 7 \
   --filter next,eslint-config-next                       # 3. latest-minor for the pinned framework pair
-npm install && npm update                                # 4. resolve + pull latest in-range (TS/Tailwind/ESLint move up within their major via their caret ranges)
+npm install && npm update --before "$(date -d "7 days ago" -I)"  # 4. resolve + pull latest in-range (TS/Tailwind/ESLint move up within their major via their caret ranges)
 npm audit                                                # 5. check
 npm audit fix                                            # 6. transitive dev-chain fixes ONLY
 ```
@@ -79,21 +79,21 @@ Next declares `sharp` as an **optionalDependency** (`^0.34.3` on 15.5.x), so the
 
 ```json
 "overrides": {
-  "sharp": "^0.35.3"
+  "sharp": "^0.35.5"
 }
 ```
 
 Note this app never executes sharp: `next.config.ts` sets `output: "export"` with `images.unoptimized: true`, so the image optimizer is not built and the binary is not loaded. The override is lockfile hygiene to clear the alert, not a live exposure fix. Bump the floor when a new libvips advisory lands; drop it when Next's own pin moves past 0.35.
 
-### TRAP: the eslint dev chain is stuck on brace-expansion 1.x
+### TRAP: the eslint dev chain is stuck on minimatch 3.x
 
-`npm audit` reports 9 high that will NOT go away. All of them are one advisory, GHSA-mh99-v99m-4gvg (`brace-expansion` <= 5.0.7, unbounded expansion length -> OOM), reached through `eslint 9 -> @eslint/eslintrc + @eslint/config-array -> minimatch 3.x -> brace-expansion 1.x`. The other 8 rows are just parents inheriting it.
+`npm audit` keeps reporting GHSA-g3hv-75wg-m249 (moderate) on `minimatch` 3.x and 10.x: the only fix is 11.0.1, a new major, reached through `eslint 9 -> @eslint/eslintrc + @eslint/config-array -> minimatch 3.x`. The `brace-expansion` 1.x copy under it does get backports (1.1.21 clears every listed advisory), so `npm update` keeps that one current.
 
-**There is no fix on the 1.x line.** The maintainer backports per major line (1.1.16 and 2.1.2 shipped the same day for the earlier GHSA-3jxr-9vmj-r5cp), but 5.0.8 shipped alone. Verified by reading the tarballs: 5.0.8 adds `EXPANSION_MAX_LENGTH` (4M chars); 1.1.16 has only the `max` count cap and no length bound. The GitHub range is unbounded below, so 1.1.16 is genuinely in range, not a false positive.
+**Do not override `minimatch` to a newer major.** With minimatch 10 `npm run lint` dies with `The requested module 'minimatch' does not provide an export named 'default'`: `@eslint/eslintrc` and `@eslint/config-array` do `import minimatch from "minimatch"`, and the newer majors have no default export. It clears when `eslint` 10 lands, which is on the hold list behind Next 16.
 
-**Do not try to override `minimatch` to 10.x.** Tried 2026-07-28: `npm audit` goes to 0, typecheck and build stay green, and `npm run lint` dies with `The requested module 'minimatch' does not provide an export named 'default'`. `@eslint/eslintrc/lib/config-array/override-tester.js` and `@eslint/config-array/dist/esm/index.js` both do `import minimatch from "minimatch"`, and minimatch 10's ESM build has no default export. The vulnerable path is the incompatible path; there is nothing to scope around.
+### TRAP: compression pinned exactly by serve
 
-Upstream-gated exactly like `glib` below: it clears when `eslint` 10 lands, which is on the hold list behind Next 16. Leave it, recheck each pass. What you CAN keep current is the 5.x copy under `@typescript-eslint/typescript-estree` (`npm update brace-expansion`); that one is in range and moves for free.
+`serve` (the e2e static server) pins `compression` to exactly `1.8.1`, so GHSA-vc2v-76pw-4v95 (high, fixed in 1.8.2) cannot move without a `serve` release. No override against an exact parent pin. Exposure: dev only, `serve` hosts the local build on loopback for Playwright and never ships. Recheck each pass: `npm view serve dependencies.compression`.
 
 ---
 
@@ -128,9 +128,9 @@ cargo build                           # compiles + links the app_lib; needs the 
 
 - Security updates are on (public repo) and open PRs automatically.
 - **A failed Dependabot run leaves NO PR and NO alert change**, so `gh pr list` looks clean while alerts stay open. Always cross-check `gh api repos/ph33nx/lila-player/dependabot/alerts` and `gh run list` before concluding there is nothing to do. Both `sharp` and `glib` are in this state: no reachable auto-fix, so every run fails silently.
-- `.github/workflows/dependabot-auto-merge.yml` auto-merges **patch + minor** Dependabot PRs after CI passes.
+- `.github/workflows/dependabot-auto-merge.yml` auto-merges **patch + minor** Dependabot PRs after CI passes, but only once the repo setting "Allow auto-merge" is on. While it is off the job fails with `Auto merge is not allowed for this repository` and the PR stays open with green CI.
 - **An auto-merged PR does not trigger `publish.yml`.** Merges made with `GITHUB_TOKEN` cannot start another workflow, so no release is cut and `eslint-config-next` silently drifts off the `next` version it must match. Re-align it on the next manual pass.
-- There is **no `.github/dependabot.yml`**, so only _security_ updates get PRs, not routine version updates. Adding one (ecosystems `npm` + `cargo` + `github-actions`, weekly) would automate most of a routine pass and pair with the existing auto-merge. Consider it.
+- `.github/dependabot.yml` keeps version updates off (`open-pull-requests-limit: 0`) and ignores the hold-list majors with `versions` ranges, the only ignore form security updates respect. A security PR that proposes a held major (tailwindcss 4 for `postcss-selector-parser`): close it; the ignore stops it reopening.
 - Dependabot PRs that this maintenance run already fixes on `main` auto-close as resolved. No need to merge them by hand.
 
 ---
@@ -139,6 +139,6 @@ cargo build                           # compiles + links the app_lib; needs the 
 
 **Held on their current major on purpose:** typescript 5.x · tailwindcss 3.x · tailwind-merge 2.x · next 15.5.x · eslint 9.x · eslint-config-next = next.
 
-**Residual, upstream-gated, do not chase:** `glib` 0.18.5 RUSTSEC unsoundness warning, capped by Tauri 2.x on gtk-rs 0.18 (re-proved: `cargo update -p glib --precise 0.20.0` fails at `gtk v0.18.2 <- tauri`); recheck when Tauri releases on gtk-rs 0.20.
+**Residual, upstream-gated, do not chase:** `glib` 0.18.5 RUSTSEC unsoundness, capped by Tauri 2.x on gtk-rs 0.18 (re-proved on tauri 2.12.5: `cargo update -p glib --precise 0.20.0` fails at `gtk v0.18.2 <- tauri`); recheck when Tauri releases on gtk-rs 0.20. `minimatch` 3.x and `compression` 1.8.1: the two npm traps above.
 
-**Last pass (v1.0.0):** react/react-dom 19.2.8 · motion 13.2 (replaces the legacy `framer-motion` package; imports are `motion/react`) · lucide-react 1.42 · @radix-ui/react-slider latest · @tauri-apps/cli 2.11.x · postcss 8.5.28 · lefthook 2.1.12 · npm-check-updates 23 · next-themes 0.4.6. Test toolchain: vitest 5.0.0 · vite 8 · @vitejs/plugin-react 6 · jsdom 30 · @testing-library/react 16 · @playwright/test 1.63.0 · @axe-core/playwright 4.13 · serve. Removed as unused: `@tauri-apps/api`, `@tauri-apps/plugin-dialog`, `@tauri-apps/plugin-fs`, `@radix-ui/react-dialog`, `@radix-ui/react-label`, `@radix-ui/react-slot`, `tailwindcss-animate`, `vite-tsconfig-paths`; Cargo: `tauri-plugin-fs`, `tauri-plugin-dialog`. `npm audit` 0 (the brace-expansion chain cleared), `cargo update` refreshed 89 crates in range, `cargo audit` 0 vulnerabilities.
+**Last pass (v1.1.1 + security sweep):** next and eslint-config-next 15.5.28 · react/react-dom 19.3.1 · vite 8.3.5 · vitest 5.0.5 · undici 8.12.3 · sharp override floor 0.35.5 · motion 13.5 (replaces the legacy `framer-motion` package; imports are `motion/react`) · everything else `npm update --before <7 days ago>`; Cargo: `cargo update -p tokio --precise 1.54.1` only (Cargo has no release-age filter, so a cooldown pass moves just the advisory crate). Not taken, majors outside the hold list: motion 14.

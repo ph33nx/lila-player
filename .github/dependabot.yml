@@ -1,0 +1,23 @@
+# Security updates only (version updates off via open-pull-requests-limit: 0).
+# The held majors in docs/dependencies.md are migrated on purpose, never by a security PR.
+# `versions`, not `update-types`: only `versions` also binds security updates.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "typescript"
+        versions: [">=6"]
+      - dependency-name: "tailwindcss"
+        versions: [">=4"]
+      - dependency-name: "tailwind-merge"
+        versions: [">=3"]
+      - dependency-name: "next"
+        versions: [">=16"]
+      - dependency-name: "eslint-config-next"
+        versions: [">=16"]
+      - dependency-name: "eslint"
+        versions: [">=10"]
